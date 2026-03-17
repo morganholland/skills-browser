@@ -1,18 +1,18 @@
 # Skill Browser
 
-A terminal-first discovery tool for agent skills across multiple editors. Browse, search, filter, and explore all installed skills from Claude Code, Codex, Cursor, OpenCode, and Pi, including sub-skills inside compound skills.
+A terminal-first tool for discovering, browsing, and installing agent skills across multiple editors. Search your installed skills from Claude Code, Codex, Cursor, OpenCode, and Pi. Explore remote marketplaces to find new ones. Install with a single command.
 
 ## Why
 
-Claude Code skills accumulate fast. Between global installs, project-local skills, compound skills with nested sub-commands, and the Shopify Agent Hub, it becomes impossible to remember what you have or what triggers them. The built-in `skills list` is a flat dump with no descriptions or search. Skill Browser gives you:
+Agent skills accumulate fast. Between global installs, project-local skills, compound skills with nested sub-commands, and multiple marketplaces, it becomes impossible to remember what you have or find what you need. The built-in `skills list` is a flat dump with no descriptions or search. Skill Browser gives you:
 
-- Full-text search across names, descriptions, sub-skills, and trigger phrases
-- Category, scope, and source filtering
-- Compound skill expansion (sub-skills listed inline under parent)
+- **Installed tab**: Browse everything you have, across all editors, with full-text search
+- **Explore tab**: Discover new skills from 4 built-in marketplaces (+ your own custom repos)
+- **One-command install**: `sb install <name>` or press `i` in the TUI, targeting any editor
+- Category, editor, and source filtering
+- Compound skill expansion (sub-skills listed inline)
 - Natural language trigger extraction (what phrases activate each skill)
-- Source tracking: Community (Agent Hub) vs Manual (hand-installed)
-- Detailed views with requirements, provides, and trigger commands
-- Both a CLI and an optional web interface
+- Both a TUI and an optional web interface
 
 ## Quick Start
 
@@ -20,130 +20,103 @@ Claude Code skills accumulate fast. Between global installs, project-local skill
 # Add to your shell profile (~/.zshrc, ~/.bashrc)
 alias sb="/path/to/skill-browser-cli.sh"
 
-# List all skills
+# Browse installed skills (TUI)
 sb
 
-# Search (any unknown command is treated as a search)
-sb morning
+# Explore remote marketplaces for new skills
+sb explore
+
+# Search across installed + remote
 sb search bigquery
+
+# Install a skill you found
+sb install polaris
+sb install polaris --editor all    # install to all detected editors
+sb install polaris --editor cursor # install to Cursor only
 
 # Show detail for a specific skill
 sb show pm-toolkit
 
-# Group by category
-sb cats
+# List available marketplaces
+sb repos
 
-# Filter by scope, category, or source
-sb list local
-sb list workflow
-sb list community
+# Add your own marketplace
+sb add-repo myuser/my-skills
+sb add-repo myuser/my-skills --path skills  # if skills are in a subdirectory
 
 # Regenerate the index
 sb refresh
-
-# Open the web UI locally
-sb web
 ```
 
-## What Each Column Shows
+## Discovering New Skills
 
-The list view shows five columns per skill:
+The Explore tab (`sb explore` or press `Tab` in the TUI) lets you search and browse skills from remote GitHub repos and the Agent Hub. Press `Enter` on any skill to load its full SKILL.md. Press `i` to install it.
 
-| Column | What it shows |
-|--------|---------------|
-| **Command** | The `/slash-command` to trigger the skill |
-| **Category** | core, creation, workflow, self-improvement, or utility (color-coded) |
-| **Editor** | Which editor(s) the skill is installed in + scope (e.g. `claude/local`, `codex,cursor/global`) |
-| **Source** | Community (installed from Agent Hub via `skills get`) or Manual (hand-installed/untracked) |
-| **Description** | First 2 lines of the skill description, wrapped to fit terminal |
+### Included Marketplaces
 
-Below the main row, you'll see:
-- **triggers:** Natural language phrases extracted from the description that will activate the skill
-- **Sub-skills** (for compound skills): Indented tree of sub-commands with descriptions
+| Marketplace | Type | What's in it |
+|-------------|------|-------------|
+| [anthropics/skills](https://github.com/anthropics/skills) | Skills | Anthropic's official skill collection |
+| [obra/superpowers](https://github.com/obra/superpowers) | Skills | Community superpowers (design, engineering, writing) |
+| [levnikolaevich/claude-code-skills](https://github.com/levnikolaevich/claude-code-skills) | Skills | Community-contributed skills |
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Plugins | Official and external Claude Code plugins |
+| Shopify Agent Hub | Skills | Shopify-internal skills (requires `skills` CLI) |
 
-## Installation
+Remote data is cached for 4 hours. Press `R` in the Explore tab or run `sb fetch-remote` to refresh.
 
-### Requirements
+### Adding Your Own Marketplace
 
-- bash 4+ (macOS ships bash 3; zsh works fine as the invoking shell)
-- python3 (for JSON processing)
-- Claude Code with skills installed
-- (Optional) Shopify `skills` CLI for source/trust detection
-
-### Setup
-
-1. Copy the three files to a directory:
-
-```
-skill-browser/
-  generate-skill-index.sh       # Index generator
-  skill-browser-cli.sh          # CLI entry point
-  skill-browser-template.html   # Web UI template (optional)
-```
-
-2. Make them executable:
+Any GitHub repo that contains SKILL.md files in subdirectories works as a marketplace.
 
 ```bash
-chmod +x generate-skill-index.sh skill-browser-cli.sh
+# Add a skill repo (each subdirectory should contain a SKILL.md)
+sb add-repo myuser/my-skills
+
+# If skills live in a subdirectory (e.g. repo/skills/foo/SKILL.md)
+sb add-repo myuser/my-skills --path skills
+
+# Add a plugin repo
+sb add-repo myuser/my-plugins --plugins plugins
+
+# See all repos (built-in + custom)
+sb repos
+
+# Remove a custom repo
+sb remove-repo myuser/my-skills
 ```
 
-3. Add a shell alias:
+Custom repos are stored in `~/.cache/skill-browser/custom-repos.txt` (one per line, `owner/repo:path` format). After adding a repo, run `sb fetch-remote` to pull its skills into the Explore tab.
 
-```bash
-# In ~/.zshrc or ~/.bashrc
-alias sb="/path/to/skill-browser-cli.sh"
+**Expected repo structure for skills:**
+```
+my-skills/
+  skill-one/
+    SKILL.md
+  skill-two/
+    SKILL.md
 ```
 
-4. Run it:
-
-```bash
-sb
+**Expected repo structure for plugins:**
+```
+my-plugins/
+  plugins/
+    plugin-one/
+      .claude-plugin/plugin.json
+    plugin-two/
+      .claude-plugin/plugin.json
 ```
 
-The first run auto-generates the index. Subsequent runs reuse the cached index (auto-refreshes after 7 days, or run `sb refresh` manually).
+### CLI vs TUI
 
-### Optional: Claude Code slash command
+| Method | How |
+|--------|-----|
+| TUI browse | `sb explore`, then `i` to install |
+| TUI search | `sb explore`, then `/` and type a query |
+| CLI list | `sb explore-list` or `sb explore-list --json` |
+| CLI install | `sb install <name>` |
+| CLI detail | `sb remote-show <name>` |
 
-To trigger via `/skill-browser` inside Claude Code:
-
-```bash
-mkdir -p .claude/skills/skill-browser
-# Copy SKILL.md from skills/skill-browser/SKILL.md
-```
-
-## How It Works
-
-```
-detect_editors()
-    |-- Checks for Claude Code, Codex, Cursor, OpenCode, Pi
-    |-- Detection: directory exists (~/.claude/, ~/.cursor/, etc.) OR binary on PATH
-    '-- Outputs editors.json (1-hour TTL)
-
-generate-skill-index.sh
-    |
-    |-- Reads editors.json for all detected editors
-    |-- For each editor, scans global + project skill directories:
-    |     Claude Code: ~/.claude/skills/  + .claude/skills/
-    |     Codex:       ~/.agents/skills/  + .agents/skills/
-    |     Cursor:      ~/.cursor/rules/   + .cursor/rules/
-    |     OpenCode:    ~/.config/opencode/skills/ + .opencode/skills/
-    |     Pi:          ~/.pi/agent/skills/ + .pi/skills/
-    |-- Parses SKILL.md (all editors) + .mdc files (Cursor only)
-    |-- Adds "editor" and "editors" fields to each skill
-    |-- Deduplicates: skills in multiple editors get editors: ["claude","codex"]
-    |
-    |-- Outputs ~/.cache/skill-browser/skill-index.json
-    '-- Builds  ~/.cache/skill-browser/index.html (if template exists)
-
-skill-browser-cli.sh
-    |
-    |-- Auto-generates index if missing or stale (>7 days)
-    |-- Calls `skills list` to build a trust/source cache (1-hour TTL)
-    |-- Reads skill-index.json + editors.json
-    '-- Renders colored terminal output via embedded Python
-```
-
-### Multi-Editor Support
+## Multi-Editor Support
 
 SKILL.md is a cross-editor standard. The browser auto-detects which editors are installed and scans all of them:
 
@@ -155,68 +128,207 @@ SKILL.md is a cross-editor standard. The browser auto-detects which editors are 
 | OpenCode | `~/.config/opencode/skills/` | `.opencode/skills/` | `~/.config/opencode/` or `opencode` binary |
 | Pi | `~/.pi/agent/skills/` | `.pi/skills/` | `~/.pi/` exists |
 
-The "Editor" column shows which editor(s) each skill belongs to (e.g. `claude/local`, `codex,cursor/global`). Use the `f` key to filter by editor. When installing from the Explore tab, skills are installed to Claude Code by default, or use `--editor` to target other editors.
+The "Editor" column shows which editor(s) each skill belongs to (e.g. `claude/local`, `codex,cursor/global`). Use the `f` key to filter by editor. When installing, skills go to Claude Code by default, or use `--editor` to target others.
 
-On machines with only Claude Code, the behavior is unchanged from previous versions.
+On machines with only Claude Code, behavior is identical to a single-editor setup.
+
+## What Each Column Shows
+
+### Installed Tab
+
+| Column | What it shows |
+|--------|---------------|
+| **Command** | The `/slash-command` to trigger the skill |
+| **Type** | Smart tag inferred from name + description (Product, Engineering, Design, Data, etc.) |
+| **Editor** | Which editor(s) + scope (e.g. `claude/local`, `codex,cursor/global`) |
+| **Source** | Community (Agent Hub) or Manual (hand-installed) |
+| **Description** | Truncated skill description |
+
+### Explore Tab
+
+| Column | What it shows |
+|--------|---------------|
+| **Name** | Skill or plugin name |
+| **Repo** | Source marketplace (anthropics, obra, hub, etc.) |
+| **Status** | Whether it's already installed locally |
+| **Description** | Truncated description |
+
+## Installation
+
+### Requirements
+
+- bash 4+ (macOS ships bash 3; zsh works fine as the invoking shell)
+- python3 (for JSON processing)
+- `gh` CLI (for fetching remote skills from GitHub)
+- (Optional) Shopify `skills` CLI for Agent Hub access and source detection
+
+### Setup
+
+1. Clone or copy the files:
+
+```bash
+git clone https://github.com/morganholland/skills-browser.git
+```
+
+2. Make executable:
+
+```bash
+chmod +x skills-browser/generate-skill-index.sh skills-browser/skill-browser-cli.sh
+```
+
+3. Add a shell alias:
+
+```bash
+# In ~/.zshrc or ~/.bashrc
+alias sb="/path/to/skills-browser/skill-browser-cli.sh"
+```
+
+4. Run it:
+
+```bash
+sb
+```
+
+The first run auto-generates the index and fetches remote skills. Subsequent runs reuse caches (index: 7-day TTL, remote: 4-hour TTL, editors: 1-hour TTL).
+
+## How It Works
+
+```
+detect_editors()
+    |-- Checks for Claude Code, Codex, Cursor, OpenCode, Pi
+    |-- Detection: directory exists OR binary on PATH
+    '-- Outputs editors.json (1-hour TTL)
+
+generate-skill-index.sh
+    |-- Reads editors.json
+    |-- For each editor, scans global + project skill directories
+    |-- Parses SKILL.md (all editors) + .mdc files (Cursor only)
+    |-- Adds "editor" and "editors" fields per skill
+    |-- Deduplicates across editors
+    '-- Outputs skill-index.json + index.html
+
+skill-browser-cli.sh
+    |-- Loads skill-index.json + editors.json + remote caches
+    |-- Fetches remote skills from GitHub repos + Agent Hub
+    '-- Renders interactive TUI via embedded Python
+```
 
 ### Project Detection
 
-The generator auto-detects your Claude Code project by walking up from the current directory looking for a `.claude/skills/` folder. Override with:
+Auto-detects your project by walking up from CWD looking for a `.claude/skills/` folder. Override with:
 
 ```bash
 SKILL_BROWSER_PROJECT_DIR=/path/to/project sb refresh
 ```
 
-If no project is found, only global skills are indexed.
-
 ### Source Detection
 
-If the Shopify `skills` CLI is installed, the browser calls `skills list` to determine each skill's provenance:
+If the `skills` CLI is available, the browser calls `skills list` to determine provenance:
 
-- **Community**: Installed from the Shopify Agent Hub via `skills get`. Tracked, updatable.
-- **Manual**: Installed by hand, symlinked, or otherwise untracked by the skills CLI.
+- **Community**: Installed from Agent Hub. Tracked, updatable.
+- **Manual**: Hand-installed, symlinked, or untracked.
 
-The trust cache is stored at `/tmp/skill-browser/trust-cache.json` with a 1-hour TTL. If the `skills` CLI is not available, all skills show as "Manual".
+Without the CLI, all skills show as "Manual". Core browsing is unaffected.
 
 ### Trigger Extraction
 
-The CLI parses each skill's description looking for natural language trigger phrases. It recognizes patterns like:
+Parses each skill's description for natural language trigger phrases:
 
 - "Triggers on patterns like X, Y, Z"
 - "Use when the user says X, Y, or Z"
 
-These are displayed on a `triggers:` line below each skill. This is especially useful for Claude Code itself, so it can match user intent to the right skill.
+Displayed on a `triggers:` line below each skill in the detail view.
 
-## Sharing with Others
+## CLI Reference
 
-### What works today
+| Command | Description |
+|---------|-------------|
+| `sb` | Interactive TUI browser |
+| `sb explore` | Launch on the Explore tab |
+| `sb search <query>` | Pre-filled search in TUI |
+| `sb show <name>` | Detail view for an installed skill |
+| `sb cats` | Group installed skills by category |
+| `sb install <name>` | Install a skill (Claude Code by default) |
+| `sb install <name> --editor <e>` | Install to a specific editor (claude, codex, cursor, opencode, pi, all) |
+| `sb explore-list [--json] [--type skills\|plugins] [--repo <owner>] [query]` | List remote skills (pipeable) |
+| `sb remote-show <name>` | Detail view for a remote skill |
+| `sb repos` | List all skill/plugin repos |
+| `sb add-repo <owner/repo> [--path dir] [--plugins dir]` | Add a custom marketplace repo |
+| `sb remove-repo <owner/repo>` | Remove a custom repo |
+| `sb refresh` | Regenerate local index + trust cache |
+| `sb fetch-remote` | Refresh remote skill/plugin cache |
+| `sb web` | Open the HTML browser locally |
+| `sb help` | Show help |
 
-The CLI and index generator are fully portable. Anyone with Claude Code can:
+### TUI Keys
 
-1. Copy the three script files to a directory
-2. `chmod +x` them
-3. Add the `sb` alias
-4. Run `sb` from inside any Claude Code project
+| Key | Action |
+|-----|--------|
+| `j`/`k` or arrows | Navigate |
+| `Enter` | Detail view (Installed) or load full SKILL.md (Explore) |
+| `/` | Search |
+| `f` | Cycle filter (all, skills, plugins, then detected editors) |
+| `s` | Toggle sort (type, name) - Installed tab only |
+| `i` | Install selected skill - Explore tab only |
+| `R` | Refresh remote cache - Explore tab only |
+| `Tab` | Switch between Installed and Explore tabs |
+| `q` | Quit |
+| Mouse scroll | Navigate list or scroll detail panel |
 
-It auto-detects their project root and scans their installed skills. No configuration needed. If they have the Shopify `skills` CLI, source detection works automatically. If not, everything still works (source just shows "Manual" for all).
+## JSON Schema
 
-### Packaging for distribution
+### Skill Index (`skill-index.json`)
 
-```bash
-mkdir skill-browser-dist
-cp generate-skill-index.sh skill-browser-dist/
-cp skill-browser-cli.sh skill-browser-dist/
-cp skill-browser-template.html skill-browser-dist/  # optional, for web UI
+```json
+{
+  "generatedAt": "2026-03-16T01:00:00Z",
+  "totalSkills": 123,
+  "localCount": 27,
+  "globalCount": 28,
+  "bothCount": 0,
+  "pluginCount": 68,
+  "skills": [
+    {
+      "id": "signal-scanner",
+      "name": "signal-scanner",
+      "description": "Crawl Slack activity from strategic leaders...",
+      "category": "workflow",
+      "scope": "local",
+      "editor": "claude",
+      "editors": ["claude", "codex"],
+      "provides": ["slack-intelligence"],
+      "requires": { "mcps": ["playground-slack-mcp"], "bins": [], "skills": [] },
+      "argumentHint": "[handle]",
+      "isCompound": false,
+      "subSkills": [],
+      "triggerCommand": "/signal-scanner",
+      "lineCount": 263,
+      "skillPath": "/path/to/SKILL.md"
+    }
+  ]
+}
 ```
 
-Share the folder. Recipients add the alias and they're done.
+### Explore List (`sb explore-list --json`)
 
-### What needs adjustment for non-Shopify users
+```json
+[
+  {
+    "name": "skill-name",
+    "type": "skill",
+    "repo": "anthropics/skills",
+    "owner": "anthropics",
+    "description": "What this skill does",
+    "url": "https://github.com/anthropics/skills/tree/main/skills/skill-name",
+    "installed": false,
+    "compatible_editors": ["claude", "codex", "cursor", "opencode", "pi"]
+  }
+]
+```
 
-- **Web UI deployment**: `quick deploy` is Shopify-internal. Others use `sb web` to open the HTML locally, or deploy to their own static hosting.
-- **Source detection**: The `skills` CLI is Shopify's Agent Hub client. Without it, source shows "Manual" for all skills. The core browsing experience is unaffected.
+Plugins have `compatible_editors: ["claude"]`. Skills (SKILL.md) are compatible with all editors.
 
-### Recommended SKILL.md frontmatter
+## Recommended SKILL.md Frontmatter
 
 For best results in the browser, skill authors should include:
 
@@ -235,97 +347,3 @@ requires:
 argument-hint: "[optional] <required>"
 ---
 ```
-
-## CLI Reference
-
-| Command | Description |
-|---------|-------------|
-| `sb` | List all skills with descriptions, triggers, source, and sub-skills |
-| `sb search <query>` | Full-text search across names, descriptions, sub-skills |
-| `sb show <name>` | Detailed view: full description, triggers, requirements, sub-skills |
-| `sb cats` | Group skills by category with colored headers |
-| `sb list local` | Show only project-local skills |
-| `sb list global` | Show only globally installed skills |
-| `sb list <category>` | Filter by: core, creation, workflow, self-improvement, utility |
-| `sb list community` | Show only Agent Hub skills |
-| `sb list manual` | Show only hand-installed skills |
-| `sb install <name>` | Install a skill from Agent Hub (Claude Code by default) |
-| `sb install <name> --editor cursor` | Install to a specific editor's skill directory |
-| `sb install <name> --editor all` | Install to all detected editors |
-| `sb refresh` | Regenerate the JSON index and trust cache |
-| `sb web` | Open the HTML browser locally |
-| `sb help` | Show help |
-| `sb <anything else>` | Treated as a search query |
-
-### Search
-
-Search is case-insensitive and checks: skill name, description, trigger command, argument hint, provides tags, sub-skill names, sub-skill descriptions, and sub-skill commands. Name matches are ranked above description-only matches.
-
-### Fuzzy Show
-
-`sb show` does exact match first, then substring match. One substring match shows that skill directly. Multiple matches list them for disambiguation:
-
-```
-$ sb show roadmap
-Multiple matches:
-  /roadmap-add-item      Add a new feature or item to a project roadmap...
-  /roadmap-build-item    Implement a roadmap feature by following its pl...
-  /roadmap-clarify-item  Research and clarify a roadmap item's planning...
-  /roadmap-refine-item   Visually refine and polish an already-built roa...
-  /roadmap-status        View the current status of all roadmap items or...
-```
-
-## File Locations (this vault)
-
-```
-3 - Resources/scripts/
-  generate-skill-index.sh          # Index generator
-  skill-browser-cli.sh             # CLI
-  skill-browser-template.html      # Web UI template
-
-skills/skill-browser/SKILL.md      # Claude Code slash command
-```
-
-## JSON Index Schema
-
-```json
-{
-  "generatedAt": "2026-03-15T20:27:25Z",
-  "totalSkills": 55,
-  "localCount": 27,
-  "globalCount": 28,
-  "bothCount": 0,
-  "skills": [
-    {
-      "id": "signal-scanner",
-      "name": "signal-scanner",
-      "description": "Crawl Slack activity from strategic leaders...",
-      "category": "workflow",
-      "scope": "local",
-      "editor": "claude",
-      "editors": ["claude", "codex"],
-      "provides": ["slack-intelligence"],
-      "requires": { "mcps": ["playground-slack-mcp"], "bins": [], "skills": [] },
-      "argumentHint": "[handle]",
-      "isCompound": false,
-      "subSkills": [],
-      "triggerCommand": "/signal-scanner",
-      "lineCount": 263
-    }
-  ]
-}
-```
-
-### Explore List JSON Schema
-
-`sb explore-list --json` includes a `compatible_editors` field:
-
-```json
-{
-  "name": "skill-name",
-  "type": "skill",
-  "compatible_editors": ["claude", "codex", "cursor", "opencode", "pi"]
-}
-```
-
-Plugins are `compatible_editors: ["claude"]` only. Skills (SKILL.md) are compatible with all editors.

@@ -1549,12 +1549,24 @@ PYEOF
 }
 
 REMOTE_CACHE_DIR="$SB_CACHE_DIR/remote-cache"
-# Format: "owner/repo:skills_path" (path to directory containing skill subdirs)
+CUSTOM_REPOS_FILE="$SB_CACHE_DIR/custom-repos.txt"
+
+# Built-in skill repos: "owner/repo:skills_path"
 REMOTE_REPOS=(
     "anthropics/skills:skills"
     "obra/superpowers:skills"
     "levnikolaevich/claude-code-skills:"
 )
+
+# Load user-added custom repos from config file
+if [ -f "$CUSTOM_REPOS_FILE" ]; then
+    while IFS= read -r line; do
+        line="${line%%#*}"  # strip comments
+        line="${line// /}"  # strip whitespace
+        [ -z "$line" ] && continue
+        REMOTE_REPOS+=("$line")
+    done < "$CUSTOM_REPOS_FILE"
+fi
 
 fetch_remote_repos() {
     mkdir -p "$REMOTE_CACHE_DIR"
@@ -1766,10 +1778,21 @@ print(json.dumps(skills))
 PYEOF_HUB
 }
 
-# Plugin repos: "owner/repo:dir1,dir2,..." (directories containing plugin subdirs)
+# Built-in plugin repos: "owner/repo:dir1,dir2,..."
 REMOTE_PLUGIN_REPOS=(
     "anthropics/claude-plugins-official:plugins,external_plugins"
 )
+
+# Load user-added custom plugin repos
+CUSTOM_PLUGIN_REPOS_FILE="$SB_CACHE_DIR/custom-plugin-repos.txt"
+if [ -f "$CUSTOM_PLUGIN_REPOS_FILE" ]; then
+    while IFS= read -r line; do
+        line="${line%%#*}"
+        line="${line// /}"
+        [ -z "$line" ] && continue
+        REMOTE_PLUGIN_REPOS+=("$line")
+    done < "$CUSTOM_PLUGIN_REPOS_FILE"
+fi
 
 fetch_plugin_repos() {
     mkdir -p "$REMOTE_CACHE_DIR"
@@ -2094,6 +2117,12 @@ case "$cmd" in
         echo -e "  ${CYAN}sb remote-show${NC} <name>       Show detail of a remote skill/plugin"
         echo -e "  ${CYAN}sb install${NC} <name> [--editor <e>]  Install a skill (claude|codex|cursor|opencode|pi|all)"
         echo ""
+        echo -e "  ${BOLD}Marketplaces:${NC}"
+        echo -e "  ${CYAN}sb repos${NC}                    List all skill/plugin repos (built-in + custom)"
+        echo -e "  ${CYAN}sb add-repo${NC} <owner/repo>    Add a custom GitHub skill repo"
+        echo -e "  ${CYAN}sb add-repo${NC} <owner/repo> --plugins <dir>  Add a custom plugin repo"
+        echo -e "  ${CYAN}sb remove-repo${NC} <owner/repo> Remove a custom repo"
+        echo ""
         echo -e "  ${BOLD}Maintenance:${NC}"
         echo -e "  ${CYAN}sb refresh${NC}                  Regenerate local index + trust cache"
         echo -e "  ${CYAN}sb fetch-remote${NC}             Refresh remote skill/plugin cache"
@@ -2105,6 +2134,119 @@ case "$cmd" in
     fetch-remote)
         fetch_all_remote
         echo -e "${GREEN}Remote cache refreshed.${NC}"
+        ;;
+    repos)
+        echo -e "${BOLD}Skill Repos:${NC}"
+        echo -e "  ${DIM}Built-in:${NC}"
+        echo -e "  ${CYAN}anthropics/skills${NC}               Anthropic's official skills"
+        echo -e "  ${CYAN}obra/superpowers${NC}                Community superpowers collection"
+        echo -e "  ${CYAN}levnikolaevich/claude-code-skills${NC}  Community skills"
+        echo ""
+        echo -e "${BOLD}Plugin Repos:${NC}"
+        echo -e "  ${DIM}Built-in:${NC}"
+        echo -e "  ${CYAN}anthropics/claude-plugins-official${NC}  Official + external plugins"
+        if [ -f "$CUSTOM_REPOS_FILE" ] && [ -s "$CUSTOM_REPOS_FILE" ]; then
+            echo ""
+            echo -e "  ${DIM}Custom skill repos:${NC}"
+            while IFS= read -r line; do
+                line="${line%%#*}"; line="${line// /}"
+                [ -z "$line" ] && continue
+                repo="${line%%:*}"
+                echo -e "  ${GREEN}${repo}${NC}"
+            done < "$CUSTOM_REPOS_FILE"
+        fi
+        if [ -f "$CUSTOM_PLUGIN_REPOS_FILE" ] && [ -s "$CUSTOM_PLUGIN_REPOS_FILE" ]; then
+            echo ""
+            echo -e "  ${DIM}Custom plugin repos:${NC}"
+            while IFS= read -r line; do
+                line="${line%%#*}"; line="${line// /}"
+                [ -z "$line" ] && continue
+                repo="${line%%:*}"
+                echo -e "  ${GREEN}${repo}${NC}"
+            done < "$CUSTOM_PLUGIN_REPOS_FILE"
+        fi
+        echo ""
+        echo -e "${DIM}Add your own: sb add-repo owner/repo${NC}"
+        ;;
+    add-repo)
+        shift
+        repo=""
+        plugins_dir=""
+        skills_path=""
+        while [ $# -gt 0 ]; do
+            case "$1" in
+                --plugins)
+                    plugins_dir="${2:-plugins}"
+                    shift 2
+                    ;;
+                --path)
+                    skills_path="${2:-}"
+                    shift 2
+                    ;;
+                *)
+                    repo="$1"
+                    shift
+                    ;;
+            esac
+        done
+        if [ -z "$repo" ]; then
+            echo -e "${RED}Usage: sb add-repo <owner/repo> [--path skills_subdir] [--plugins plugin_dir]${NC}" >&2
+            exit 1
+        fi
+        # Validate format: must be owner/repo
+        if [[ ! "$repo" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
+            echo -e "${RED}Invalid repo format. Expected: owner/repo (e.g. myuser/my-skills)${NC}" >&2
+            exit 1
+        fi
+        if [ -n "$plugins_dir" ]; then
+            # Add as plugin repo
+            entry="${repo}:${plugins_dir}"
+            if [ -f "$CUSTOM_PLUGIN_REPOS_FILE" ] && grep -qF "$repo" "$CUSTOM_PLUGIN_REPOS_FILE" 2>/dev/null; then
+                echo -e "${ORANGE}${repo} already in custom plugin repos${NC}"
+            else
+                echo "$entry" >> "$CUSTOM_PLUGIN_REPOS_FILE"
+                echo -e "${GREEN}Added plugin repo: ${repo} (dir: ${plugins_dir})${NC}"
+            fi
+        else
+            # Add as skill repo
+            entry="${repo}:${skills_path}"
+            if [ -f "$CUSTOM_REPOS_FILE" ] && grep -qF "$repo" "$CUSTOM_REPOS_FILE" 2>/dev/null; then
+                echo -e "${ORANGE}${repo} already in custom skill repos${NC}"
+            else
+                echo "$entry" >> "$CUSTOM_REPOS_FILE"
+                echo -e "${GREEN}Added skill repo: ${repo}${NC}"
+                if [ -n "$skills_path" ]; then
+                    echo -e "${DIM}  Skills path: ${skills_path}${NC}"
+                else
+                    echo -e "${DIM}  Skills at repo root (use --path <dir> if skills are in a subdirectory)${NC}"
+                fi
+            fi
+        fi
+        echo -e "${DIM}Run 'sb fetch-remote' to pull skills from the new repo.${NC}"
+        ;;
+    remove-repo)
+        shift
+        repo="${1:-}"
+        if [ -z "$repo" ]; then
+            echo -e "${RED}Usage: sb remove-repo <owner/repo>${NC}" >&2
+            exit 1
+        fi
+        removed=false
+        for f in "$CUSTOM_REPOS_FILE" "$CUSTOM_PLUGIN_REPOS_FILE"; do
+            if [ -f "$f" ] && grep -qF "$repo" "$f" 2>/dev/null; then
+                grep -vF "$repo" "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
+                removed=true
+            fi
+        done
+        if [ "$removed" = true ]; then
+            echo -e "${GREEN}Removed: ${repo}${NC}"
+            # Clean cached data for this repo
+            rm -f "$REMOTE_CACHE_DIR/${repo//\//--}.json" "$REMOTE_CACHE_DIR/${repo//\//--}--plugins.json" 2>/dev/null
+            echo -e "${DIM}Cleared cached data. Run 'sb fetch-remote' to update.${NC}"
+        else
+            echo -e "${RED}${repo} not found in custom repos${NC}" >&2
+            exit 1
+        fi
         ;;
     show)
         ensure_index
