@@ -96,7 +96,22 @@ declare -A SEEN_SKILLS
 extract_field() {
     local frontmatter="$1"
     local field="$2"
-    echo "$frontmatter" | grep -E "^${field}:" | head -1 | sed "s/^${field}: *//" | tr -d '"' | tr -d "'" || true
+    local value
+    value=$(echo "$frontmatter" | grep -E "^${field}:" | head -1 | sed "s/^${field}: *//" | tr -d '"' | tr -d "'" || true)
+    # Handle YAML multiline (| or >) by collecting indented continuation lines
+    if [ "$value" = "|" ] || [ "$value" = ">" ] || [ -z "$value" ]; then
+        local multi
+        multi=$(echo "$frontmatter" | awk -v f="$field" '
+            $0 ~ "^"f":" { found=1; next }
+            found && /^  / { gsub(/^  /, ""); line = line " " $0; next }
+            found && !/^  / { exit }
+            END { gsub(/^ /, "", line); print line }
+        ' 2>/dev/null || true)
+        if [ -n "$multi" ]; then
+            value="$multi"
+        fi
+    fi
+    echo "$value"
 }
 
 # Extract YAML list items under a nested key (e.g., requires.mcps)
@@ -381,9 +396,20 @@ if os.path.exists(entries_path):
                 pass
 
 def extract_field(frontmatter, field):
-    for line in frontmatter.splitlines():
+    lines = frontmatter.splitlines()
+    for i, line in enumerate(lines):
         if line.startswith(field + ':'):
-            return line[len(field)+1:].strip().strip('\"').strip(\"'\")
+            val = line[len(field)+1:].strip().strip('\"').strip(\"'\")
+            # Handle YAML multiline (| or >)
+            if val in ('|', '>', '|+', '|-', '>+', '>-', ''):
+                parts = []
+                for j in range(i + 1, len(lines)):
+                    if lines[j].startswith('  '):
+                        parts.append(lines[j].strip())
+                    else:
+                        break
+                return ' '.join(parts)
+            return val
     return ''
 
 def json_escape(s):
