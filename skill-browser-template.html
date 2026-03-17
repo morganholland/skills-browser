@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Browser</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --red: #f85149;
+    --pink: #f778ba;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-count {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .search-bar {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  .search-bar:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  }
+
+  .search-bar::placeholder { color: var(--text-muted); }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-right: 4px;
+    align-self: center;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .pill:hover { border-color: var(--text-muted); color: var(--text); }
+  .pill.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  .pill-count {
+    font-size: 10px;
+    opacity: 0.8;
+  }
+
+  .sort-select {
+    padding: 3px 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  .main { padding: 24px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    position: relative;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .card-command {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .card-badges {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .badge-cat {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .cat-core { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+  .cat-creation { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+  .cat-workflow { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+  .cat-self-improvement { background: rgba(210, 153, 34, 0.15); color: var(--orange); }
+  .cat-utility { background: rgba(139, 148, 158, 0.15); color: var(--text-muted); }
+
+  .badge-scope {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .scope-local { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+  .scope-global { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+  .scope-both { background: rgba(210, 153, 34, 0.15); color: var(--orange); }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .meta-pill {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(139, 148, 158, 0.1);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .compound-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--orange);
+    font-weight: 500;
+  }
+
+  .chevron {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 10px;
+  }
+
+  .chevron.open { transform: rotate(90deg); }
+
+  /* Sub-skill cards */
+  .sub-skills {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .sub-skills.open { display: block; }
+
+  .sub-skill {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+  }
+
+  .sub-skill:last-child { border-bottom: none; }
+
+  .sub-skill-command {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .sub-skill-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Detail Panel */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+  }
+
+  .overlay.open { display: block; }
+
+  .detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(520px, 90vw);
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    z-index: 201;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.2s ease;
+    padding: 24px;
+  }
+
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .detail-close:hover { background: var(--border); color: var(--text); }
+
+  .detail-command {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .detail-badges {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .detail-desc {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .detail-section {
+    margin-bottom: 16px;
+  }
+
+  .detail-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .copy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .copy-row code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 14px;
+    color: var(--accent);
+    flex: 1;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .req-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .req-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .req-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .req-dot.available { background: var(--green); }
+  .req-dot.unknown { background: var(--orange); }
+
+  .detail-sub-skills {
+    margin-top: 8px;
+  }
+
+  .detail-sub-skill {
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .detail-sub-skill-command {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .detail-sub-skill-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .provides-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .provides-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(88, 166, 255, 0.1);
+    color: var(--accent);
+    border-radius: 8px;
+    border: 1px solid rgba(88, 166, 255, 0.2);
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    align-items: center;
+  }
+
+  .stats-bar span { white-space: nowrap; }
+
+  .footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .footer .stale { color: var(--orange); }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px;
+    color: var(--text-muted);
+  }
+
+  .no-results-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .header { padding: 12px 16px; }
+    .main { padding: 16px; }
+    .filter-row { gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>Skill Browser</h1>
+    <span class="badge badge-count" id="skill-count">0 skills</span>
+    <div class="stats-bar" style="margin-left: auto;">
+      <span id="showing-count"></span>
+    </div>
+  </div>
+  <input type="text" class="search-bar" id="search" placeholder="Search skills, commands, descriptions, sub-skills..." autofocus>
+  <div class="filter-row">
+    <span class="filter-label">Scope:</span>
+    <div class="filter-group" id="scope-filters"></div>
+    <span class="filter-label" style="margin-left: 12px;">Category:</span>
+    <div class="filter-group" id="cat-filters"></div>
+    <select class="sort-select" id="sort-select">
+      <option value="alpha">A-Z</option>
+      <option value="category">By Category</option>
+      <option value="complexity">By Complexity</option>
+    </select>
+  </div>
+</div>
+
+<div class="main">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="footer" id="footer"></div>
+
+<div class="overlay" id="overlay"></div>
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" id="detail-close">&times;</button>
+  <div id="detail-content"></div>
+</div>
+
+<script>
+// DATA_PLACEHOLDER will be replaced by the build step
+const SKILL_DATA = __SKILL_DATA__;
+
+const allSkills = SKILL_DATA.skills;
+let activeScope = 'all';
+let activeCat = 'all';
+let searchQuery = '';
+let sortMode = 'alpha';
+
+// Category display config
+const catConfig = {
+  core: { label: 'Core', class: 'cat-core' },
+  creation: { label: 'Creation', class: 'cat-creation' },
+  workflow: { label: 'Workflow', class: 'cat-workflow' },
+  'self-improvement': { label: 'Self-Improve', class: 'cat-self-improvement' },
+  utility: { label: 'Utility', class: 'cat-utility' }
+};
+
+// Init
+function init() {
+  document.getElementById('skill-count').textContent = `${SKILL_DATA.totalSkills} skills`;
+  buildScopeFilters();
+  buildCatFilters();
+  render();
+  setupListeners();
+  updateFooter();
+}
+
+function buildScopeFilters() {
+  const container = document.getElementById('scope-filters');
+  const scopes = { all: allSkills.length };
+  allSkills.forEach(s => {
+    scopes[s.scope] = (scopes[s.scope] || 0) + 1;
+  });
+  const order = ['all', 'local', 'global', 'both'];
+  const labels = { all: 'All', local: 'Local', global: 'Global', both: 'Both' };
+  order.forEach(scope => {
+    if (scope !== 'all' && !scopes[scope]) return;
+    const pill = document.createElement('button');
+    pill.className = `pill ${scope === 'all' ? 'active' : ''}`;
+    pill.dataset.scope = scope;
+    pill.innerHTML = `${labels[scope]} <span class="pill-count">${scopes[scope] || 0}</span>`;
+    container.appendChild(pill);
+  });
+}
+
+function buildCatFilters() {
+  const container = document.getElementById('cat-filters');
+  const cats = {};
+  allSkills.forEach(s => {
+    cats[s.category] = (cats[s.category] || 0) + 1;
+  });
+
+  // All pill
+  const allPill = document.createElement('button');
+  allPill.className = 'pill active';
+  allPill.dataset.cat = 'all';
+  allPill.innerHTML = `All <span class="pill-count">${allSkills.length}</span>`;
+  container.appendChild(allPill);
+
+  const order = ['core', 'creation', 'workflow', 'self-improvement', 'utility'];
+  order.forEach(cat => {
+    if (!cats[cat]) return;
+    const pill = document.createElement('button');
+    pill.className = 'pill';
+    pill.dataset.cat = cat;
+    const cfg = catConfig[cat] || { label: cat, class: 'cat-utility' };
+    pill.innerHTML = `${cfg.label} <span class="pill-count">${cats[cat]}</span>`;
+    container.appendChild(pill);
+  });
+}
+
+function matchesSearch(skill, q) {
+  if (!q) return true;
+  const lower = q.toLowerCase();
+  const fields = [
+    skill.name,
+    skill.description,
+    skill.triggerCommand,
+    skill.argumentHint,
+    ...skill.provides,
+    ...skill.subSkills.map(s => s.name),
+    ...skill.subSkills.map(s => s.description),
+    ...skill.subSkills.map(s => s.command),
+    ...skill.requires.mcps,
+    ...skill.requires.bins
+  ];
+  return fields.some(f => f && f.toLowerCase().includes(lower));
+}
+
+function getFiltered() {
+  let skills = allSkills.filter(s => {
+    if (activeScope !== 'all' && s.scope !== activeScope) return false;
+    if (activeCat !== 'all' && s.category !== activeCat) return false;
+    if (!matchesSearch(s, searchQuery)) return false;
+    return true;
+  });
+
+  // Sort
+  if (sortMode === 'alpha') {
+    skills.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortMode === 'category') {
+    const catOrder = { core: 0, creation: 1, workflow: 2, 'self-improvement': 3, utility: 4 };
+    skills.sort((a, b) => (catOrder[a.category] ?? 9) - (catOrder[b.category] ?? 9) || a.name.localeCompare(b.name));
+  } else if (sortMode === 'complexity') {
+    skills.sort((a, b) => b.lineCount - a.lineCount);
+  }
+
+  return skills;
+}
+
+function renderCard(skill) {
+  const cfg = catConfig[skill.category] || { label: skill.category, class: 'cat-utility' };
+  const scopeClass = `scope-${skill.scope}`;
+
+  let metaHtml = '';
+  if (skill.requires.mcps.length) {
+    metaHtml += skill.requires.mcps.map(m => `<span class="meta-pill">${m}</span>`).join('');
+  }
+  if (skill.requires.bins.length) {
+    metaHtml += skill.requires.bins.map(b => `<span class="meta-pill">${b}</span>`).join('');
+  }
+
+  let compoundHtml = '';
+  if (skill.isCompound && skill.subSkills.length) {
+    compoundHtml = `
+      <div class="compound-indicator" onclick="event.stopPropagation(); toggleSubSkills('${skill.id}')">
+        <span class="chevron" id="chevron-${skill.id}">&#9654;</span>
+        ${skill.subSkills.length} sub-skills
+      </div>
+    `;
+  }
+
+  let subSkillsHtml = '';
+  if (skill.isCompound && skill.subSkills.length) {
+    subSkillsHtml = `<div class="sub-skills" id="subs-${skill.id}">
+      ${skill.subSkills.map(s => `
+        <div class="sub-skill">
+          <div class="sub-skill-command">${s.command}</div>
+          <div class="sub-skill-desc">${escHtml(s.description)}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  return `
+    <div class="card" onclick="openDetail('${skill.id}')">
+      <div class="card-header">
+        <span class="card-command">${skill.triggerCommand}</span>
+        <div class="card-badges">
+          <span class="badge badge-cat ${cfg.class}">${cfg.label}</span>
+          <span class="badge badge-scope ${scopeClass}">${skill.scope}</span>
+        </div>
+      </div>
+      <div class="card-desc">${escHtml(skill.description)}</div>
+      <div class="card-meta">
+        ${metaHtml}
+        ${compoundHtml}
+      </div>
+      ${subSkillsHtml}
+    </div>
+  `;
+}
+
+function render() {
+  const filtered = getFiltered();
+  const grid = document.getElementById('grid');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-title">No skills found</div>
+        <div>Try adjusting your search or filters</div>
+      </div>`;
+  } else {
+    grid.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  document.getElementById('showing-count').textContent =
+    filtered.length === allSkills.length
+      ? ''
+      : `Showing ${filtered.length} of ${allSkills.length}`;
+}
+
+function toggleSubSkills(id) {
+  const el = document.getElementById(`subs-${id}`);
+  const chevron = document.getElementById(`chevron-${id}`);
+  if (el) {
+    el.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+}
+
+function openDetail(id) {
+  const skill = allSkills.find(s => s.id === id);
+  if (!skill) return;
+
+  const cfg = catConfig[skill.category] || { label: skill.category, class: 'cat-utility' };
+
+  let providesHtml = '';
+  if (skill.provides.length) {
+    providesHtml = `
+      <div class="detail-section">
+        <div class="detail-section-title">Provides</div>
+        <div class="provides-list">
+          ${skill.provides.map(p => `<span class="provides-tag">${p}</span>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  let reqHtml = '';
+  const allReqs = [
+    ...skill.requires.mcps.map(m => ({ name: m, type: 'MCP' })),
+    ...skill.requires.bins.map(b => ({ name: b, type: 'CLI' })),
+    ...skill.requires.skills.map(s => ({ name: s, type: 'Skill' }))
+  ];
+  if (allReqs.length) {
+    reqHtml = `
+      <div class="detail-section">
+        <div class="detail-section-title">Requirements</div>
+        <ul class="req-list">
+          ${allReqs.map(r => `
+            <li>
+              <span class="req-dot unknown"></span>
+              <span>${r.name}</span>
+              <span style="color: var(--text-muted); font-size: 11px;">(${r.type})</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>`;
+  }
+
+  let argHtml = '';
+  if (skill.argumentHint) {
+    argHtml = `
+      <div class="detail-section">
+        <div class="detail-section-title">Arguments</div>
+        <code style="color: var(--text-muted); font-size: 13px;">${escHtml(skill.argumentHint)}</code>
+      </div>`;
+  }
+
+  let subSkillsHtml = '';
+  if (skill.isCompound && skill.subSkills.length) {
+    subSkillsHtml = `
+      <div class="detail-section">
+        <div class="detail-section-title">Sub-Skills (${skill.subSkills.length})</div>
+        <div class="detail-sub-skills">
+          ${skill.subSkills.map(s => `
+            <div class="detail-sub-skill">
+              <div class="detail-sub-skill-command">${s.command}</div>
+              <div class="detail-sub-skill-desc">${escHtml(s.description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-command">${skill.triggerCommand}</div>
+    <div class="detail-badges">
+      <span class="badge badge-cat ${cfg.class}">${cfg.label}</span>
+      <span class="badge badge-scope scope-${skill.scope}">${skill.scope}</span>
+      <span style="font-size: 12px; color: var(--text-muted);">${skill.lineCount} lines</span>
+    </div>
+    <div class="detail-desc">${escHtml(skill.description)}</div>
+    <div class="detail-section">
+      <div class="detail-section-title">Trigger Command</div>
+      <div class="copy-row">
+        <code>${skill.triggerCommand}</code>
+        <button class="copy-btn" onclick="copyText('${skill.triggerCommand}')">Copy</button>
+      </div>
+    </div>
+    ${providesHtml}
+    ${reqHtml}
+    ${argHtml}
+    ${subSkillsHtml}
+  `;
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  });
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function updateFooter() {
+  const gen = new Date(SKILL_DATA.generatedAt);
+  const now = new Date();
+  const diffMs = now - gen;
+  const diffDays = Math.floor(diffMs / 86400000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffMins = Math.floor(diffMs / 60000);
+
+  let ago;
+  if (diffDays > 0) ago = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  else if (diffHours > 0) ago = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  else ago = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+
+  const stale = diffDays > 7 ? ' stale' : '';
+  const staleWarn = diffDays > 7 ? ' (run /skill-browser refresh)' : '';
+
+  document.getElementById('footer').innerHTML =
+    `Generated <span class="${stale}">${ago}${staleWarn}</span> &middot; ${SKILL_DATA.localCount} local, ${SKILL_DATA.globalCount} global`;
+}
+
+function setupListeners() {
+  // Search
+  document.getElementById('search').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    render();
+  });
+
+  // Scope pills
+  document.getElementById('scope-filters').addEventListener('click', e => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    document.querySelectorAll('#scope-filters .pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeScope = pill.dataset.scope;
+    render();
+  });
+
+  // Category pills
+  document.getElementById('cat-filters').addEventListener('click', e => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    document.querySelectorAll('#cat-filters .pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeCat = pill.dataset.cat;
+    render();
+  });
+
+  // Sort
+  document.getElementById('sort-select').addEventListener('change', e => {
+    sortMode = e.target.value;
+    render();
+  });
+
+  // Detail panel close
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('overlay').addEventListener('click', closeDetail);
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDetail();
+    if (e.key === '/' && document.activeElement !== document.getElementById('search')) {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
