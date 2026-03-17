@@ -849,12 +849,21 @@ class Browser:
         lines.append(f' {tgc}{tag}{N}  {editor_c.get(editors[0], GRY)}{editors_str}/{s["scope"]}{N}  {tc}{trust}{N}')
         lines.append('')
 
+        # Description
+        clean_desc = s['description'].replace('\\"', '"').replace("\\'", "'")
+        for dl in tw.wrap(clean_desc, width=inner_w):
+            lines.append(f' {dl}')
+        lines.append('')
+
         # Full SKILL.md content
         skill_path = s.get('skillPath', '')
         if skill_path:
             try:
                 with open(skill_path, 'r') as f:
                     raw = f.read()
+                lines.append(f' {SEP}{"─" * (inner_w - 1)}{N}')
+                lines.append(f' {B}{GRY}SKILL.md{N}')
+                lines.append('')
                 # Strip frontmatter
                 parts = raw.split('---', 2)
                 if len(parts) >= 3:
@@ -875,14 +884,9 @@ class Browser:
                         for wl in tw.wrap(raw_line, width=inner_w):
                             lines.append(f' {D}{wl}{N}')
             except (OSError, IOError):
-                # Fallback: show description
-                clean_desc = s['description'].replace('\\"', '"').replace("\\'", "'")
-                for dl in tw.wrap(clean_desc, width=inner_w):
-                    lines.append(f' {dl}')
+                lines.append(f' {D}(Could not read SKILL.md){N}')
         else:
-            clean_desc = s['description'].replace('\\"', '"').replace("\\'", "'")
-            for dl in tw.wrap(clean_desc, width=inner_w):
-                lines.append(f' {dl}')
+            lines.append(f' {D}(No SKILL.md path){N}')
 
         lines.append('')
 
