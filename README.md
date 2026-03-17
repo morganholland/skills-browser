@@ -9,6 +9,7 @@ Agent skills accumulate fast. Between global installs, project-local skills, com
 - **Installed tab**: Browse everything you have, across all editors, with full-text search
 - **Explore tab**: Discover new skills from 4 built-in marketplaces (+ your own custom repos)
 - **One-command install**: `sb install <name>` or press `i` in the TUI, targeting any editor
+- **Full skill management**: list, search, install, remove, update, validate
 - Category, editor, and source filtering
 - Compound skill expansion (sub-skills listed inline)
 - Natural language trigger extraction (what phrases activate each skill)
@@ -23,34 +24,64 @@ alias sb="/path/to/skill-browser-cli.sh"
 # Browse installed skills (TUI)
 sb
 
-# Explore remote marketplaces for new skills
-sb explore
+# List installed skills (non-interactive, pipeable)
+sb list
+sb list --json
+sb list --local
 
-# Search across installed + remote
+# Search skills
 sb search bigquery
+sb search polaris --json
 
-# Install a skill you found
+# Install a skill
 sb install polaris
-sb install polaris --editor all    # install to all detected editors
-sb install polaris --editor cursor # install to Cursor only
+sb install polaris --local     # install to project .claude/skills/
+sb install polaris --global    # install to ~/.claude/skills/
+sb install polaris --editor all
 
 # Show detail for a specific skill
 sb show pm-toolkit
 
-# List available marketplaces
-sb repos
+# Remove a skill
+sb remove pm-toolkit
+sb remove pm-toolkit --local
 
-# Add your own marketplace
-sb add-repo myuser/my-skills
-sb add-repo myuser/my-skills --path skills  # if skills are in a subdirectory
+# Update skills
+sb update
+sb update polaris
 
-# Regenerate the index
-sb refresh
+# Validate installed skills
+sb validate
+sb validate ./path/to/skill
+
+# Initialize skill directory in current project
+sb init
 ```
 
-## Discovering New Skills
+## Discovering Skills
 
-The Explore tab (`sb explore` or press `Tab` in the TUI) lets you search and browse skills from remote GitHub repos and the Agent Hub. Press `Enter` on any skill to load its full SKILL.md. Press `i` to install it.
+### TUI Browser
+
+Launch the interactive browser with `sb` (Installed tab) or `sb explore` (Explore tab). Use `/` to search, `f` to filter, `Tab` to switch tabs, `Enter` for detail, and `i` to install from the Explore tab.
+
+### Non-Interactive Search
+
+```bash
+# Search with plain-text output (pipeable)
+sb search bigquery
+
+# JSON output for scripting
+sb search bigquery --json
+
+# Limit results
+sb search bigquery -n 5
+
+# Search remote marketplaces
+sb explore-list polaris
+sb explore-list --json --type skills
+```
+
+When stdout is a TTY and no `--json` flag is passed, `sb search` launches the interactive TUI. When piped or with `--json`, it outputs plain text or JSON.
 
 ### Included Marketplaces
 
@@ -60,7 +91,6 @@ The Explore tab (`sb explore` or press `Tab` in the TUI) lets you search and bro
 | [obra/superpowers](https://github.com/obra/superpowers) | Skills | Community superpowers (design, engineering, writing) |
 | [levnikolaevich/claude-code-skills](https://github.com/levnikolaevich/claude-code-skills) | Skills | Community-contributed skills |
 | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Plugins | Official and external Claude Code plugins |
-| Shopify Agent Hub | Skills | Shopify-internal skills (requires `skills` CLI) |
 
 Remote data is cached for 4 hours. Press `R` in the Explore tab or run `sb fetch-remote` to refresh.
 
@@ -106,15 +136,69 @@ my-plugins/
       .claude-plugin/plugin.json
 ```
 
-### CLI vs TUI
+## Managing Skills
 
-| Method | How |
-|--------|-----|
-| TUI browse | `sb explore`, then `i` to install |
-| TUI search | `sb explore`, then `/` and type a query |
-| CLI list | `sb explore-list` or `sb explore-list --json` |
-| CLI install | `sb install <name>` |
-| CLI detail | `sb remote-show <name>` |
+### Listing
+
+```bash
+sb list                  # All installed skills as a table
+sb list --json           # JSON array (pipeable)
+sb list --local          # Project-scoped skills only
+sb list --global         # Global skills only
+```
+
+### Installing
+
+```bash
+sb install <name>                # Install via skills CLI (default: --local)
+sb install <name> --local        # Explicitly install to project
+sb install <name> --global       # Install globally
+sb install <name> --editor all   # Install to all detected editors
+sb add <name>                    # Shorthand for install --local
+```
+
+When a `skills` CLI is available, `sb install` delegates to it for registry tracking. For non-Claude editors or `--editor all`, SKILL.md is fetched from remote repos and copied directly.
+
+### Removing
+
+```bash
+sb remove <name>            # Remove from wherever found (prefers local)
+sb remove <name> --local    # Remove from project only
+sb remove <name> --global   # Remove from global only
+```
+
+If a `skills` CLI is available, it handles removal and registry tracking. Otherwise, the skill directory is deleted directly and the index regenerated.
+
+### Updating
+
+```bash
+sb update                   # Update all skills (via skills CLI)
+sb update <name>            # Update a specific skill
+sb update --local           # Update project skills only
+```
+
+Delegates to a `skills` CLI when available. Without one, prints guidance on re-installing.
+
+### Validating
+
+```bash
+sb validate                 # Validate all installed skills
+sb validate ./my-skill/     # Validate a specific skill directory
+```
+
+Checks:
+- SKILL.md exists
+- Has YAML frontmatter (opens and closes with `---`)
+- `name` field present
+- `description` field present and non-empty
+
+### Initializing
+
+```bash
+sb init                     # Create .claude/skills/ and skills.json
+```
+
+Sets up the project skill directory structure. Delegates to a `skills` CLI if available.
 
 ## Multi-Editor Support
 
@@ -141,7 +225,7 @@ On machines with only Claude Code, behavior is identical to a single-editor setu
 | **Command** | The `/slash-command` to trigger the skill |
 | **Type** | Smart tag inferred from name + description (Product, Engineering, Design, Data, etc.) |
 | **Editor** | Which editor(s) + scope (e.g. `claude/local`, `codex,cursor/global`) |
-| **Source** | Community (Agent Hub) or Manual (hand-installed) |
+| **Source** | Community (from a registry) or Manual (hand-installed) |
 | **Description** | Truncated skill description |
 
 ### Explore Tab
@@ -160,7 +244,7 @@ On machines with only Claude Code, behavior is identical to a single-editor setu
 - bash 4+ (macOS ships bash 3; zsh works fine as the invoking shell)
 - python3 (for JSON processing)
 - `gh` CLI (for fetching remote skills from GitHub)
-- (Optional) Shopify `skills` CLI for Agent Hub access and source detection
+- (Optional) `skills` CLI for additional skill registry access and source detection
 
 ### Setup
 
@@ -209,7 +293,7 @@ generate-skill-index.sh
 
 skill-browser-cli.sh
     |-- Loads skill-index.json + editors.json + remote caches
-    |-- Fetches remote skills from GitHub repos + Agent Hub
+    |-- Fetches remote skills from GitHub repos + skill registries
     '-- Renders interactive TUI via embedded Python
 ```
 
@@ -225,10 +309,10 @@ SKILL_BROWSER_PROJECT_DIR=/path/to/project sb refresh
 
 If the `skills` CLI is available, the browser calls `skills list` to determine provenance:
 
-- **Community**: Installed from Agent Hub. Tracked, updatable.
+- **Community**: Installed from a skill registry. Tracked, updatable.
 - **Manual**: Hand-installed, symlinked, or untracked.
 
-Without the CLI, all skills show as "Manual". Core browsing is unaffected.
+Without a `skills` CLI, all skills show as "Manual". Core browsing is unaffected.
 
 ### Trigger Extraction
 
@@ -241,20 +325,49 @@ Displayed on a `triggers:` line below each skill in the detail view.
 
 ## CLI Reference
 
+### Skill Management
+
+| Command | Description |
+|---------|-------------|
+| `sb list [--local\|--global\|--json]` | List installed skills as table or JSON |
+| `sb search <q> [--json] [-n N]` | Search skills (non-interactive when piped or --json) |
+| `sb show <name>` | Detail view for an installed skill |
+| `sb info <name>` | Alias for `show` |
+| `sb install <name> [--editor <e>] [--local\|--global]` | Install a skill |
+| `sb add <name>` | Alias for `install --local` |
+| `sb remove <name> [--local\|--global]` | Remove an installed skill |
+| `sb update [name] [--local\|--global]` | Update skills from source |
+| `sb validate [path]` | Validate skill(s) have correct SKILL.md |
+| `sb init` | Initialize `.claude/skills/` directory |
+
+### Interactive Browser
+
 | Command | Description |
 |---------|-------------|
 | `sb` | Interactive TUI browser |
 | `sb explore` | Launch on the Explore tab |
-| `sb search <query>` | Pre-filled search in TUI |
-| `sb show <name>` | Detail view for an installed skill |
-| `sb cats` | Group installed skills by category |
-| `sb install <name>` | Install a skill (Claude Code by default) |
-| `sb install <name> --editor <e>` | Install to a specific editor (claude, codex, cursor, opencode, pi, all) |
+| `sb search <query>` | Pre-filled search in TUI (when stdout is a TTY) |
+
+### Remote / Explore
+
+| Command | Description |
+|---------|-------------|
 | `sb explore-list [--json] [--type skills\|plugins] [--repo <owner>] [query]` | List remote skills (pipeable) |
 | `sb remote-show <name>` | Detail view for a remote skill |
+| `sb cats` | Group installed skills by category |
+
+### Marketplaces
+
+| Command | Description |
+|---------|-------------|
 | `sb repos` | List all skill/plugin repos |
 | `sb add-repo <owner/repo> [--path dir] [--plugins dir]` | Add a custom marketplace repo |
 | `sb remove-repo <owner/repo>` | Remove a custom repo |
+
+### Maintenance
+
+| Command | Description |
+|---------|-------------|
 | `sb refresh` | Regenerate local index + trust cache |
 | `sb fetch-remote` | Refresh remote skill/plugin cache |
 | `sb web` | Open the HTML browser locally |
@@ -274,6 +387,24 @@ Displayed on a `triggers:` line below each skill in the detail view.
 | `Tab` | Switch between Installed and Explore tabs |
 | `q` | Quit |
 | Mouse scroll | Navigate list or scroll detail panel |
+
+## `skills` CLI Parity
+
+If you use a `skills` CLI for managing agent skills, `sb` provides equivalent commands so you only need one tool:
+
+| `skills` CLI | `sb` equivalent | Notes |
+|---|---|---|
+| `skills list` | `sb list` | Adds --json, --local/--global, descriptions |
+| `skills search <q>` | `sb search <q>` | Adds --json, TUI mode, cross-editor |
+| `skills info <name>` | `sb info <name>` | Full detail view |
+| `skills get <name>` | `sb install <name>` | Adds --editor, --local/--global |
+| `skills add <name>` | `sb add <name>` | Alias for install --local |
+| `skills remove <name>` | `sb remove <name>` | Delegates to skills CLI when available |
+| `skills update` | `sb update` | Delegates to skills CLI when available |
+| `skills validate` | `sb validate` | Checks SKILL.md, frontmatter, required fields |
+| `skills init` | `sb init` | Creates .claude/skills/ + skills.json |
+
+When a `skills` CLI is installed, `sb` delegates to it for operations that benefit from registry tracking (install, remove, update). When it's not available, `sb` handles everything directly.
 
 ## JSON Schema
 
@@ -307,6 +438,25 @@ Displayed on a `triggers:` line below each skill in the detail view.
     }
   ]
 }
+```
+
+### Skill List (`sb list --json`)
+
+```json
+[
+  {
+    "name": "signal-scanner",
+    "command": "/signal-scanner",
+    "scope": "local",
+    "editor": "claude",
+    "editors": ["claude"],
+    "description": "Crawl Slack activity...",
+    "category": "workflow",
+    "isCompound": false,
+    "subSkills": 0,
+    "skillPath": "/path/to/SKILL.md"
+  }
+]
 ```
 
 ### Explore List (`sb explore-list --json`)
@@ -347,3 +497,7 @@ requires:
 argument-hint: "[optional] <required>"
 ---
 ```
+
+## License
+
+[MIT](LICENSE)

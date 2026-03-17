@@ -2107,15 +2107,28 @@ case "$cmd" in
         echo -e "  ${CYAN}sb explore${NC}                   Launch directly on Explore tab"
         echo -e "  ${CYAN}sb search${NC} <query>            Interactive browser with pre-filled search"
         echo ""
-        echo -e "  ${BOLD}Non-interactive (pipeable):${NC}"
+        echo -e "  ${BOLD}Skill Management:${NC}"
+        echo -e "  ${CYAN}sb list${NC} [--local|--global|--json]   List installed skills"
+        echo -e "  ${CYAN}sb search${NC} <q> [--json] [-n N]      Search skills (non-interactive when piped)"
+        echo -e "  ${CYAN}sb info${NC} <name>               Detail view (alias for show)"
         echo -e "  ${CYAN}sb show${NC} <name>               Detail view for installed skill"
+        echo -e "  ${CYAN}sb install${NC} <name> [opts]     Install a skill"
+        echo -e "     ${DIM}--editor <e>                 Target editor (claude|codex|cursor|opencode|pi|all)${NC}"
+        echo -e "     ${DIM}--local                      Install to project .claude/skills/${NC}"
+        echo -e "     ${DIM}--global                     Install to ~/.claude/skills/${NC}"
+        echo -e "  ${CYAN}sb add${NC} <name>                Install to project (alias for install --local)"
+        echo -e "  ${CYAN}sb remove${NC} <name> [--local|--global]  Remove an installed skill"
+        echo -e "  ${CYAN}sb update${NC} [name] [--local|--global]  Update skills from source"
+        echo -e "  ${CYAN}sb validate${NC} [path]           Validate skill(s) have correct SKILL.md"
+        echo -e "  ${CYAN}sb init${NC}                      Initialize .claude/skills/ directory"
+        echo ""
+        echo -e "  ${BOLD}Non-interactive (pipeable):${NC}"
         echo -e "  ${CYAN}sb cats${NC}                      Group installed skills by category"
         echo -e "  ${CYAN}sb explore-list${NC} [opts] [q]   List remote skills/plugins (agent-friendly)"
         echo -e "     ${DIM}--type skills|plugins        Filter by type (default: all)${NC}"
         echo -e "     ${DIM}--json                       Output as JSON array${NC}"
         echo -e "     ${DIM}--repo <owner>               Filter by repo owner${NC}"
         echo -e "  ${CYAN}sb remote-show${NC} <name>       Show detail of a remote skill/plugin"
-        echo -e "  ${CYAN}sb install${NC} <name> [--editor <e>]  Install a skill (claude|codex|cursor|opencode|pi|all)"
         echo ""
         echo -e "  ${BOLD}Marketplaces:${NC}"
         echo -e "  ${CYAN}sb repos${NC}                    List all skill/plugin repos (built-in + custom)"
@@ -2134,6 +2147,423 @@ case "$cmd" in
     fetch-remote)
         fetch_all_remote
         echo -e "${GREEN}Remote cache refreshed.${NC}"
+        ;;
+    list)
+        # Non-interactive list of installed skills (skills CLI parity)
+        ensure_index
+        build_trust_cache
+        detect_editors
+        shift  # remove 'list'
+        python3 - "$@" << 'PYEOF_LIST'
+import json, sys, os
+
+SB_CACHE_DIR = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+INDEX = os.path.join(SB_CACHE_DIR, 'skill-index.json')
+
+with open(INDEX) as f:
+    data = json.load(f)
+
+args = sys.argv[1:]
+scope_filter = ''
+json_output = False
+for a in args:
+    if a == '--local':
+        scope_filter = 'local'
+    elif a == '--global':
+        scope_filter = 'global'
+    elif a == '--json':
+        json_output = True
+
+skills = data['skills']
+if scope_filter == 'local':
+    skills = [s for s in skills if s.get('scope') in ('local', 'both')]
+elif scope_filter == 'global':
+    skills = [s for s in skills if s.get('scope') in ('global', 'both')]
+
+skills.sort(key=lambda s: s.get('triggerCommand', s['name']))
+
+if json_output:
+    out = []
+    for s in skills:
+        out.append({
+            'name': s['name'],
+            'command': s.get('triggerCommand', '/' + s['name']),
+            'scope': s.get('scope', 'unknown'),
+            'editor': s.get('editor', 'claude'),
+            'editors': s.get('editors', []),
+            'description': s.get('description', ''),
+            'category': s.get('category', ''),
+            'isCompound': s.get('isCompound', False),
+            'subSkills': len(s.get('subSkills', [])),
+            'skillPath': s.get('skillPath', ''),
+        })
+    print(json.dumps(out, indent=2))
+else:
+    B, D, N = '\033[1m', '\033[2m', '\033[0m'
+    CYN, GRN, PUR, ORA, GRY = '\033[38;5;116m', '\033[38;5;78m', '\033[38;5;141m', '\033[38;5;214m', '\033[38;5;245m'
+    scope_c = {'local': GRN, 'global': PUR, 'both': ORA}
+
+    try: cols = os.get_terminal_size().columns
+    except: cols = 120
+    CMD_W = 35
+    SCOPE_W = 8
+    EDITOR_W = 12
+    DESC_W = max(cols - CMD_W - SCOPE_W - EDITOR_W - 8, 15)
+
+    label = f'{len(skills)} installed skills'
+    if scope_filter:
+        label += f' ({scope_filter})'
+    print(f'{B}Skills{N}  {CYN}{label}{N}')
+    print()
+    print(f'  {D}{GRY}{"Command":<{CMD_W}} {"Scope":<{SCOPE_W}} {"Editor":<{EDITOR_W}} {"Description"}{N}')
+    for s in skills:
+        cmd = s.get('triggerCommand', '/' + s['name'])
+        scope = s.get('scope', '?')
+        sc = scope_c.get(scope, GRY)
+        editor = s.get('editor', 'claude')
+        desc = s.get('description', '')
+        if len(desc) > DESC_W:
+            desc = desc[:DESC_W - 1] + '\u2026'
+        subs = len(s.get('subSkills', []))
+        sub_label = f' (+{subs})' if subs > 0 else ''
+        print(f'  {CYN}{cmd:<{CMD_W}}{N} {sc}{scope:<{SCOPE_W}}{N} {GRY}{editor:<{EDITOR_W}}{N} {D}{desc}{N}{sub_label}')
+PYEOF_LIST
+        ;;
+    search)
+        # If stdout is a TTY and no --json flag, launch interactive TUI
+        shift  # remove 'search'
+        is_json=false
+        limit=20
+        query_parts=()
+        for arg in "$@"; do
+            case "$arg" in
+                --json) is_json=true ;;
+                -n) : ;;  # next arg is limit
+                *) query_parts+=("$arg") ;;
+            esac
+        done
+        # Parse -n value
+        prev=""
+        for arg in "$@"; do
+            if [ "$prev" = "-n" ]; then
+                limit="$arg"
+            fi
+            prev="$arg"
+        done
+        query="${query_parts[*]:-}"
+
+        if [ "$is_json" = true ] || ! [ -t 1 ]; then
+            # Non-interactive search
+            ensure_index
+            python3 - "$query" "$limit" "$is_json" << 'PYEOF_SEARCH'
+import json, sys, os, re
+
+SB_CACHE_DIR = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+INDEX = os.path.join(SB_CACHE_DIR, 'skill-index.json')
+
+with open(INDEX) as f:
+    data = json.load(f)
+
+query = sys.argv[1] if len(sys.argv) > 1 else ''
+limit = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 20
+is_json = sys.argv[3] == 'true' if len(sys.argv) > 3 else False
+
+def matches(s, q):
+    q = q.lower()
+    fields = [s['name'], s['description'], s.get('triggerCommand', ''), s.get('argumentHint', '')]
+    fields += s.get('provides', [])
+    fields += [sub['name'] for sub in s.get('subSkills', [])]
+    fields += [sub['description'] for sub in s.get('subSkills', [])]
+    fields += [sub.get('command', '') for sub in s.get('subSkills', [])]
+    return any(q in (f or '').lower() for f in fields)
+
+skills = data['skills']
+if query:
+    skills = [s for s in skills if matches(s, query)]
+skills = skills[:limit]
+
+if is_json:
+    out = [{'name': s['name'], 'command': s.get('triggerCommand', '/' + s['name']),
+            'description': s.get('description', ''), 'scope': s.get('scope', ''),
+            'editor': s.get('editor', '')} for s in skills]
+    print(json.dumps(out, indent=2))
+else:
+    B, D, N = '\033[1m', '\033[2m', '\033[0m'
+    CYN, GRY = '\033[38;5;116m', '\033[38;5;245m'
+    for s in skills:
+        cmd = s.get('triggerCommand', '/' + s['name'])
+        desc = s.get('description', '')[:80]
+        print(f'  {CYN}{cmd:<35}{N} {D}{desc}{N}')
+PYEOF_SEARCH
+        else
+            # Interactive TUI with pre-filled search
+            ensure_index
+            build_trust_cache
+            detect_editors
+            fetch_all_remote 2>/dev/null
+            py_interactive search "$query"
+        fi
+        ;;
+    info)
+        # Alias for show
+        shift  # remove 'info'
+        ensure_index
+        build_trust_cache
+        detect_editors
+        py_interactive show "$@"
+        ;;
+    add)
+        # Alias for install --local
+        shift  # remove 'add'
+        name="${1:-}"
+        if [ -z "$name" ]; then
+            echo -e "${RED}Usage: sb add <name>${NC}" >&2
+            exit 1
+        fi
+        # Re-invoke as install --local
+        exec "$0" install "$name" --local
+        ;;
+    remove)
+        # Remove an installed skill
+        shift  # remove 'remove'
+        name=""
+        scope_flag=""
+        while [ $# -gt 0 ]; do
+            case "$1" in
+                --local) scope_flag="local"; shift ;;
+                --global) scope_flag="global"; shift ;;
+                *) name="$1"; shift ;;
+            esac
+        done
+        if [ -z "$name" ]; then
+            echo -e "${RED}Usage: sb remove <name> [--local|--global]${NC}" >&2
+            exit 1
+        fi
+
+        # Try skills CLI first (for Agent Hub tracking)
+        if command -v skills >/dev/null 2>&1; then
+            skills_args=("$name")
+            [ -n "$scope_flag" ] && skills_args+=("--${scope_flag}")
+            if skills remove "${skills_args[@]}" 2>/dev/null; then
+                echo -e "${GREEN}Removed: ${name} (via skills CLI)${NC}"
+                # Regenerate index
+                ensure_index
+                detect_editors
+                export SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json"
+                rm -f "$INDEX"
+                bash "${SCRIPT_DIR}/generate-skill-index.sh" >/dev/null 2>&1
+                exit 0
+            fi
+        fi
+
+        # Manual removal: find the skill in the index
+        ensure_index
+        detect_editors
+        SB_NAME="$name" SB_SCOPE="$scope_flag" SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json" python3 << 'PYEOF_REMOVE'
+import json, os, sys, shutil
+
+name = os.environ.get('SB_NAME', '').lower().lstrip('/')
+scope_flag = os.environ.get('SB_SCOPE', '')
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.path.expanduser('~'), '.cache', 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+
+with open(index_path) as f:
+    data = json.load(f)
+
+# Find matching skills
+matches = [s for s in data['skills'] if s['name'].lower() == name or s.get('id', '').lower() == name]
+if not matches:
+    print(f'\033[38;5;203m"{name}" not found in installed skills\033[0m', file=sys.stderr)
+    sys.exit(1)
+
+# Filter by scope if specified
+if scope_flag:
+    scoped = [s for s in matches if s.get('scope') in (scope_flag, 'both')]
+    if not scoped:
+        print(f'\033[38;5;203m"{name}" not found in {scope_flag} scope\033[0m', file=sys.stderr)
+        sys.exit(1)
+    matches = scoped
+
+removed = []
+for s in matches:
+    skill_path = s.get('skillPath', '')
+    if not skill_path or not os.path.exists(skill_path):
+        continue
+    # Remove the directory containing SKILL.md
+    skill_dir = os.path.dirname(skill_path)
+    if os.path.isdir(skill_dir) and os.path.basename(skill_dir).lower() != 'skills':
+        shutil.rmtree(skill_dir)
+        removed.append(f'{s.get("editor", "?")}:{s.get("scope", "?")} ({skill_dir})')
+
+if removed:
+    for r in removed:
+        print(f'\033[38;5;78mRemoved: {name} from {r}\033[0m')
+else:
+    print(f'\033[38;5;203mCould not locate files for "{name}"\033[0m', file=sys.stderr)
+    sys.exit(1)
+PYEOF_REMOVE
+        # Regenerate index
+        export SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json"
+        rm -f "$INDEX"
+        bash "${SCRIPT_DIR}/generate-skill-index.sh" >/dev/null 2>&1
+        ;;
+    update)
+        # Update skills from source
+        shift  # remove 'update'
+        name=""
+        scope_flag=""
+        while [ $# -gt 0 ]; do
+            case "$1" in
+                --local) scope_flag="--local"; shift ;;
+                --global) scope_flag="--global"; shift ;;
+                *) name="$1"; shift ;;
+            esac
+        done
+
+        if command -v skills >/dev/null 2>&1; then
+            skills_args=()
+            [ -n "$name" ] && skills_args+=("$name")
+            [ -n "$scope_flag" ] && skills_args+=("$scope_flag")
+            echo -e "${DIM}Updating via skills CLI...${NC}" >&2
+            skills update "${skills_args[@]}" 2>&1
+            echo -e "${GREEN}Update complete.${NC}"
+        else
+            echo -e "${ORANGE}No skills CLI found. Manual update:${NC}" >&2
+            if [ -n "$name" ]; then
+                echo -e "${DIM}Re-install the skill: sb install ${name}${NC}"
+            else
+                echo -e "${DIM}Install the skills CLI: npm install -g @shopify/skills${NC}"
+                echo -e "${DIM}Or re-install individual skills: sb install <name>${NC}"
+            fi
+        fi
+        # Regenerate index
+        ensure_index
+        detect_editors
+        export SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json"
+        rm -f "$INDEX"
+        bash "${SCRIPT_DIR}/generate-skill-index.sh" >/dev/null 2>&1
+        ;;
+    validate)
+        # Validate skill(s)
+        shift  # remove 'validate'
+        target="${1:-}"
+        python3 - "$target" << 'PYEOF_VALIDATE'
+import sys, os, re, glob as _glob
+
+target = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else ''
+
+B, N = '\033[1m', '\033[0m'
+GRN, RED, GRY, ORA = '\033[38;5;78m', '\033[38;5;203m', '\033[38;5;245m', '\033[38;5;214m'
+
+def validate_skill(path):
+    """Validate a skill directory. Returns (name, passed, reason)."""
+    name = os.path.basename(path.rstrip('/'))
+    skill_md = os.path.join(path, 'SKILL.md')
+
+    if not os.path.isfile(skill_md):
+        return name, False, 'SKILL.md not found'
+
+    with open(skill_md) as f:
+        content = f.read()
+
+    # Check frontmatter
+    parts = content.split('---', 2)
+    if len(parts) < 3:
+        return name, False, 'No YAML frontmatter (missing --- delimiters)'
+
+    fm = parts[1].strip()
+    if not fm:
+        return name, False, 'Empty frontmatter'
+
+    # Check name field
+    name_match = re.search(r'^name:\s*(.+)$', fm, re.MULTILINE)
+    if not name_match:
+        return name, False, "Missing required field 'name'"
+
+    # Check description field
+    desc_match = re.search(r'^description:\s*(.+)$', fm, re.MULTILINE)
+    if not desc_match:
+        return name, False, "Missing required field 'description'"
+
+    desc_val = desc_match.group(1).strip().strip('"').strip("'")
+    if not desc_val:
+        return name, False, "Field 'description' is empty"
+
+    return name, True, 'OK'
+
+dirs = []
+if target:
+    # Validate specific path
+    if os.path.isdir(target):
+        dirs = [target]
+    else:
+        print(f'{RED}Path not found: {target}{N}', file=sys.stderr)
+        sys.exit(1)
+else:
+    # Validate all installed skills from index
+    cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+    index_path = os.path.join(cache_dir, 'skill-index.json')
+    if os.path.isfile(index_path):
+        import json
+        with open(index_path) as f:
+            data = json.load(f)
+        seen = set()
+        for s in data['skills']:
+            sp = s.get('skillPath', '')
+            if sp:
+                d = os.path.dirname(sp)
+                if d not in seen and os.path.isdir(d):
+                    seen.add(d)
+                    dirs.append(d)
+    if not dirs:
+        # Fallback: scan common directories
+        for d in [os.path.expanduser('~/.claude/skills'), '.claude/skills']:
+            if os.path.isdir(d):
+                for sub in sorted(os.listdir(d)):
+                    full = os.path.join(d, sub)
+                    if os.path.isdir(full):
+                        dirs.append(full)
+
+passed = 0
+failed = 0
+total = 0
+for d in sorted(dirs):
+    total += 1
+    name, ok, reason = validate_skill(d)
+    if ok:
+        passed += 1
+        print(f'  {GRN}\u2713{N} {name}')
+    else:
+        failed += 1
+        print(f'  {RED}\u2717{N} {name}: {reason}')
+
+print()
+if failed == 0:
+    print(f'{GRN}{passed}/{total} skills valid{N}')
+else:
+    print(f'{RED}{passed}/{total} valid ({failed} failed){N}')
+    sys.exit(1)
+PYEOF_VALIDATE
+        ;;
+    init)
+        # Initialize .claude/skills/ directory
+        if command -v skills >/dev/null 2>&1; then
+            echo -e "${DIM}Initializing via skills CLI...${NC}" >&2
+            skills init --local 2>&1
+        fi
+        # Ensure directories exist regardless
+        if [ ! -d ".claude/skills" ]; then
+            mkdir -p ".claude/skills"
+            echo -e "${GREEN}Created .claude/skills/${NC}"
+        else
+            echo -e "${DIM}.claude/skills/ already exists${NC}"
+        fi
+        if [ ! -f ".claude/skills.json" ]; then
+            echo '{"skills":[]}' > ".claude/skills.json"
+            echo -e "${GREEN}Created .claude/skills.json${NC}"
+        else
+            echo -e "${DIM}.claude/skills.json already exists${NC}"
+        fi
         ;;
     repos)
         echo -e "${BOLD}Skill Repos:${NC}"
@@ -2492,12 +2922,21 @@ PYEOF_REMOTE_SHOW
         # Non-interactive install (agent-friendly)
         shift  # remove 'install'
         target_editor=""
+        scope_flag=""
         name=""
         while [ $# -gt 0 ]; do
             case "$1" in
                 --editor)
                     target_editor="${2:-}"
                     shift 2
+                    ;;
+                --local)
+                    scope_flag="--local"
+                    shift
+                    ;;
+                --global)
+                    scope_flag="--global"
+                    shift
                     ;;
                 *)
                     name="$1"
@@ -2506,7 +2945,7 @@ PYEOF_REMOTE_SHOW
             esac
         done
         if [ -z "$name" ]; then
-            echo -e "${RED}Usage: sb install <name> [--editor claude|codex|cursor|opencode|pi|all]${NC}" >&2
+            echo -e "${RED}Usage: sb install <name> [--editor <e>] [--local|--global]${NC}" >&2
             exit 1
         fi
 
@@ -2517,9 +2956,10 @@ PYEOF_REMOTE_SHOW
         if [ -z "$target_editor" ] || [ "$target_editor" = "claude" ]; then
             # Default: try skills CLI for Claude Code
             if command -v skills >/dev/null 2>&1; then
+                skills_scope="${scope_flag:---local}"
                 echo -e "${DIM}Installing ${name} via skills CLI...${NC}" >&2
-                if skills get "$name" --local 2>&1; then
-                    echo -e "${GREEN}Installed: ${name} (claude)${NC}"
+                if skills get "$name" "$skills_scope" 2>&1; then
+                    echo -e "${GREEN}Installed: ${name} (claude, ${skills_scope#--})${NC}"
                     [ -z "$target_editor" ] && exit 0
                 fi
             fi
