@@ -6,6 +6,12 @@ A terminal-first tool for discovering, browsing, and installing agent skills acr
 
 ![Explore Tab](screenshots/explore.png)
 
+![Stale Skills](screenshots/stale.png)
+
+![Why Diagnostic](screenshots/why.png)
+
+![Skill Diff](screenshots/diff.png)
+
 ## Install
 
 ```bash
@@ -30,15 +36,25 @@ sb list --json              # JSON output
 sb list --local             # Project skills only
 
 sb show <name>              # Detail view
-sb install <name>           # Install a skill
+sb install <name>           # Install a skill (auto-resolves deps)
 sb install <name> --local   # Install to project
 sb install <name> --global  # Install globally
+sb install <name> --no-deps # Skip dependency auto-install
 sb add <name>               # Shorthand for install --local
 
 sb remove <name>            # Remove a skill
 sb update                   # Update all skills
 sb validate                 # Check all skills have valid SKILL.md
 sb init                     # Create .claude/skills/ in current project
+
+sb why <name>               # Show where a skill loads from
+sb run <name> [args]        # Invoke a skill via its editor CLI
+sb diff                     # Compare local vs global vs remote
+sb stale                    # List skills older than 30 days
+sb stale --days 7           # Custom staleness threshold
+sb export                   # Export installed skills manifest
+sb import                   # Install from manifest
+sb import --dry-run         # Preview what would be installed
 ```
 
 ## Discovering Skills
@@ -91,7 +107,7 @@ sb install polaris --editor all
 | `sb search <q> [--json] [-n N]` | Search skills |
 | `sb list [--local\|--global\|--json]` | List installed skills |
 | `sb show <name>` / `sb info <name>` | Detail view |
-| `sb install <name> [--editor <e>] [--local\|--global]` | Install a skill |
+| `sb install <name> [--editor <e>] [--local\|--global] [--no-deps]` | Install a skill (auto-resolves deps) |
 | `sb add <name>` | Install to project (alias for `install --local`) |
 | `sb remove <name> [--local\|--global]` | Remove a skill |
 | `sb update [name] [--local\|--global]` | Update from source |
@@ -100,6 +116,12 @@ sb install polaris --editor all
 | `sb explore-list [--json] [--type skills\|plugins] [query]` | List remote skills (pipeable) |
 | `sb remote-show <name>` | Detail view for remote skill |
 | `sb cats` | Group skills by category |
+| `sb why <name>` | Show where a skill loads from |
+| `sb run <name> [args]` | Invoke a skill via its editor CLI |
+| `sb diff [--json]` | Compare local vs global vs remote |
+| `sb stale [--days N] [--json]` | List skills older than N days |
+| `sb export [--file F]` | Export installed skills manifest |
+| `sb import [--file F] [--dry-run]` | Install from manifest |
 | `sb repos` / `sb add-repo` / `sb remove-repo` | Manage marketplaces |
 | `sb refresh` | Regenerate index |
 | `sb fetch-remote` | Refresh remote cache |
