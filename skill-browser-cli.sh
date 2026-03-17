@@ -1139,20 +1139,7 @@ class Browser:
 
                             indicator = f'{CYN}\u25b6{N}' if is_selected else ' '
                             cmd_trunc = trunc(s['triggerCommand'], NAME_W)
-                            # Staleness badge
-                            import time as _time
-                            _lm = s.get('lastModified', 0)
-                            _age_badge = ''
-                            _badge_len = 0
-                            if _lm > 0:
-                                _age_d = int((_time.time() - _lm) / 86400)
-                                if _age_d > 30:
-                                    _badge_text = f'{_age_d}d'
-                                    _badge_len = len(_badge_text) + 1
-                                    _age_badge = f' {D}{ORA}{_badge_text}{N}'
-                            # Shorten description to make room for badge
-                            _desc_w = max(DESC_W - _badge_len, 5)
-                            desc = trunc(s['description'], _desc_w)
+                            desc = trunc(s['description'], DESC_W)
                             name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                             tag_s = f"{tgc}{tag:<{TAG_W}}{N}"
                             editor_label = trunc(editor_label, EDITOR_W)
@@ -1160,9 +1147,9 @@ class Browser:
                             trust_s = f"{tc}{trust:<{TRUST_W}}{N}"
 
                             if is_selected:
-                                left = f'{V}{indicator}{B}{name_s}{N}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{desc}{_age_badge}'
+                                left = f'{V}{indicator}{B}{name_s}{N}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{desc}'
                             else:
-                                left = f'{V}{indicator}{name_s}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{D}{desc}{N}{_age_badge}'
+                                left = f'{V}{indicator}{name_s}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{D}{desc}{N}'
                             skill_idx += 1
                     else:
                         left = f'{V}'
