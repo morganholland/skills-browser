@@ -6,12 +6,6 @@ A terminal-first tool for discovering, browsing, and installing agent skills acr
 
 ![Explore Tab](screenshots/explore.png)
 
-![Stale Skills](screenshots/stale.png)
-
-![Why Diagnostic](screenshots/why.png)
-
-![Skill Diff](screenshots/diff.png)
-
 ## Install
 
 ```bash
