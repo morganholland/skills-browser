@@ -1127,7 +1127,6 @@ class Browser:
                             tag = smart_tag(s)
                             tgc = tag_c.get(tag, GRY)
                             tc = trust_c.get(trust, GRY)
-                            desc = trunc(s['description'], DESC_W)
 
                             # Editor/scope label
                             editors = s.get('editors', [s.get('editor', 'claude')])
@@ -1144,10 +1143,16 @@ class Browser:
                             import time as _time
                             _lm = s.get('lastModified', 0)
                             _age_badge = ''
+                            _badge_len = 0
                             if _lm > 0:
                                 _age_d = int((_time.time() - _lm) / 86400)
                                 if _age_d > 30:
-                                    _age_badge = f' {D}{ORA}{_age_d}d{N}'
+                                    _badge_text = f'{_age_d}d'
+                                    _badge_len = len(_badge_text) + 1
+                                    _age_badge = f' {D}{ORA}{_badge_text}{N}'
+                            # Shorten description to make room for badge
+                            _desc_w = max(DESC_W - _badge_len, 5)
+                            desc = trunc(s['description'], _desc_w)
                             name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                             tag_s = f"{tgc}{tag:<{TAG_W}}{N}"
                             editor_label = trunc(editor_label, EDITOR_W)
