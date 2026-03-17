@@ -1,0 +1,347 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040.0 690" width="1040.0" height="690">
+  <defs>
+    <style>
+      text { font-family: 'SF Mono', 'Menlo', 'Consolas', 'Liberation Mono', monospace; font-size: 13px; }
+    </style>
+  </defs>
+  <!-- Window frame -->
+  <rect width="1040.0" height="690" rx="10" fill="#1a1b26"/>
+  <rect width="1040.0" height="36" rx="10" fill="#24283b"/>
+  <rect y="26" width="1040.0" height="10" fill="#24283b"/>
+  <!-- Traffic lights -->
+  <circle cx="20" cy="18.0" r="6" fill="#ff5f57"/>
+  <circle cx="40" cy="18.0" r="6" fill="#febc2e"/>
+  <circle cx="60" cy="18.0" r="6" fill="#28c840"/>
+  <!-- Title -->
+  <text x="520.0" y="23.0" text-anchor="middle" fill="#565f89" font-size="13">sb — Installed Skills</text>
+
+  <text x="16" y="48" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <rect x="24.4" y="35" width="109.2" height="18" fill="#c0c0c0"/>
+  <text x="24.4" y="48" fill="#1a1b26" font-weight="normal" opacity="1" xml:space="preserve"> 1 Installed </text>
+  <text x="150.4" y="48" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">2 Explore</text>
+  <text x="242.8" y="48" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">/ to search</text>
+  <text x="956.8000000000001" y="48" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">123/123</text>
+  <text x="1015.6" y="48" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="66" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤</text>
+  <text x="16" y="84" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="84" fill="#8a8a8a" font-weight="normal" opacity="0.5" xml:space="preserve">Name                                   </text>
+  <text x="360.40000000000003" y="84" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="84" fill="#8a8a8a" font-weight="normal" opacity="0.5" xml:space="preserve">Type          </text>
+  <text x="486.40000000000003" y="84" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="84" fill="#8a8a8a" font-weight="normal" opacity="0.5" xml:space="preserve">Editor        </text>
+  <text x="612.4" y="84" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="84" fill="#8a8a8a" font-weight="normal" opacity="0.5" xml:space="preserve">Source </text>
+  <text x="679.5999999999999" y="84" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="687.9999999999999" y="84" fill="#8a8a8a" font-weight="normal" opacity="0.5" xml:space="preserve"> Detailsption</text>
+  <text x="1015.5999999999999" y="84" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="102" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">├──────────────────────────────────────────────────────────────────────────────┼────────────────────────────────────────</text>
+  <text x="16" y="120" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">┤</text>
+  <text x="16" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="24.4" y="138" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">▶</text>
+  <text x="32.8" y="138" fill="#87d7d7" font-weight="bold" opacity="1" xml:space="preserve">/brainstorm                            </text>
+  <text x="360.40000000000003" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="138" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="138" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="138" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="138" fill="#87d7d7" font-weight="bold" opacity="1" xml:space="preserve">/brainstorm</text>
+  <text x="1015.5999999999999" y="138" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="156" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="156" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/experiment-brief                      </text>
+  <text x="360.40000000000003" y="156" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="156" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="156" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="156" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="156" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="156" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="156" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="156" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product</text>
+  <text x="771.9999999999998" y="156" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local</text>
+  <text x="889.5999999999997" y="156" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual</text>
+  <text x="1015.5999999999997" y="156" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="174" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="174" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/gsd                                   </text>
+  <text x="360.40000000000003" y="174" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="174" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="174" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="174" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude,opencode/global</text>
+  <text x="679.6" y="174" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="688.0" y="174" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">Comm     </text>
+  <text x="763.6" y="174" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="772.0" y="174" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">This skil…</text>
+  <text x="1015.6" y="174" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="192" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="192" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/opportunity-score                     </text>
+  <text x="360.40000000000003" y="192" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="192" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="192" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="192" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="192" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="192" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="192" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="192" fill="#c0c0c0" font-weight="bold" opacity="1" xml:space="preserve"># Brainstorm - Feature Idea Generator</text>
+  <text x="1015.5999999999998" y="192" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="210" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="210" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/prd-maker                             </text>
+  <text x="360.40000000000003" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="210" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="210" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="210" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="704.7999999999998" y="210" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Create co…</text>
+  <text x="1015.5999999999999" y="210" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="228" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="228" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/ralph-skills:ralph                    </text>
+  <text x="360.40000000000003" y="228" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="228" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="228" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="228" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="228" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="228" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="228" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="228" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Generate 5-10 concrete feature ideas</text>
+  <text x="1015.5999999999999" y="228" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="246" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="246" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/roadmap-add-item                      </text>
+  <text x="360.40000000000003" y="246" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="246" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="246" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="246" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/global </text>
+  <text x="612.4" y="246" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="246" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="246" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="246" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">for a given theme or problem space.</text>
+  <text x="1015.5999999999999" y="246" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="264" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="264" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/roadmap-build-item                    </text>
+  <text x="360.40000000000003" y="264" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="264" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="264" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="264" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/global </text>
+  <text x="612.4" y="264" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="264" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="264" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="264" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Each idea is scoped to be Quick-</text>
+  <text x="1015.5999999999998" y="264" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="282" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="282" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/roadmap-status                        </text>
+  <text x="360.40000000000003" y="282" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="282" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="282" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="282" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/global </text>
+  <text x="612.4" y="282" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="282" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="282" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="282" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">prototypeable in 2-4 hours.</text>
+  <text x="1015.5999999999998" y="282" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="300" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="300" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/scope-doc-generator                   </text>
+  <text x="360.40000000000003" y="300" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="300" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="300" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="300" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude,opencode/global</text>
+  <text x="679.6" y="300" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="688.0" y="300" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">Comm     </text>
+  <text x="763.6" y="300" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="772.0" y="300" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Use when …</text>
+  <text x="1015.6" y="300" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="318" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="318" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:brainstorming             </text>
+  <text x="360.40000000000003" y="318" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="318" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="318" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="318" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="318" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="318" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="318" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="318" fill="#c0c0c0" font-weight="bold" opacity="1" xml:space="preserve">## Process</text>
+  <text x="780.3999999999999" y="318" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">…</text>
+  <text x="1015.5999999999999" y="318" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="336" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="336" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:requesting-code-review    </text>
+  <text x="360.40000000000003" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="336" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="336" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="336" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="704.7999999999998" y="336" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Use when …</text>
+  <text x="1015.5999999999999" y="336" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="354" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="354" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:writing-plans             </text>
+  <text x="360.40000000000003" y="354" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="354" fill="#5fafff" font-weight="normal" opacity="1" xml:space="preserve">Product       </text>
+  <text x="486.40000000000003" y="354" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="354" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="354" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="354" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="354" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="354" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">1. **Accept theme input**</text>
+  <text x="1015.5999999999999" y="354" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="372" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="372" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:agent-native-architecture</text>
+  <text x="427.6" y="372" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="436.0" y="372" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="553.6" y="372" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="562.0" y="372" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="679.6" y="372" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.4" y="372" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   - A theme, problem space, or oppor</text>
+  <text x="1015.6" y="372" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="390" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="390" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:brainstorming    </text>
+  <text x="360.40000000000003" y="390" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="390" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="390" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="390" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="390" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="390" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="390" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="390" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   - Optional: target user segment, c</text>
+  <text x="1015.5999999999998" y="390" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="408" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="408" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:dspy-ruby        </text>
+  <text x="360.40000000000003" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="408" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="408" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="408" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="704.7999999999998" y="408" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Build typ…</text>
+  <text x="1015.5999999999999" y="408" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="426" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="426" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:file-todos       </text>
+  <text x="360.40000000000003" y="426" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="426" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="426" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="426" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="426" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="426" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="426" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="426" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">2. **Generate ideas**</text>
+  <text x="1015.5999999999999" y="426" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="444" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="444" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:git-worktree     </text>
+  <text x="360.40000000000003" y="444" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="444" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="444" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="444" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="444" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="444" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="444" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="444" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   - Produce 5-10 distinct feature id</text>
+  <text x="1015.5999999999998" y="444" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="462" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="462" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/compound-engineering:resolve-pr-parallel</text>
+  <text x="377.20000000000005" y="462" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="385.6" y="462" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="503.20000000000005" y="462" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="511.6" y="462" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="629.2" y="462" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="637.6" y="462" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manua</text>
+  <text x="679.6" y="462" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.4" y="462" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   - Each idea must be:</text>
+  <text x="1015.6" y="462" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="480" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="480" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/deploy                                </text>
+  <text x="360.40000000000003" y="480" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="480" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="480" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="480" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="480" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="480" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="480" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="480" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">     - **Concrete**: specific enough </text>
+  <text x="1015.5999999999998" y="480" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="498" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="498" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/prototype                             </text>
+  <text x="360.40000000000003" y="498" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="498" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="498" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="498" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/local  </text>
+  <text x="612.4" y="498" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="498" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="498" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="498" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">     - **Scoped**: buildable as a van</text>
+  <text x="1015.5999999999998" y="498" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="516" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="516" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/qmd:release                           </text>
+  <text x="360.40000000000003" y="516" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="516" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="516" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="516" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="516" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="516" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="516" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="516" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">     - **Differentiated**: each idea </text>
+  <text x="1015.5999999999998" y="516" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="534" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="534" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:executing-plans           </text>
+  <text x="360.40000000000003" y="534" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="534" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="534" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="534" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="534" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="534" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="534" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="534" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">     - **User-centered**: clearly ide</text>
+  <text x="1015.5999999999998" y="534" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="552" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="552" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:finishing-a-development-branch</text>
+  <text x="394.0" y="552" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="402.4" y="552" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="520.0" y="552" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="528.4" y="552" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="646.0" y="552" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="654.4" y="552" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Man</text>
+  <text x="679.6" y="552" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.4" y="552" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   - Vary the ideas across different </text>
+  <text x="1015.6" y="552" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="570" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="570" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:receiving-code-review     </text>
+  <text x="360.40000000000003" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="570" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="570" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="570" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="704.7999999999998" y="570" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">Use when …</text>
+  <text x="1015.5999999999999" y="570" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="588" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="588" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:subagent-driven-development</text>
+  <text x="368.8" y="588" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="377.2" y="588" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="494.8" y="588" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="503.2" y="588" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="620.8" y="588" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="629.1999999999999" y="588" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual</text>
+  <text x="679.5999999999999" y="588" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="588" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">3. **Output ideas.json**</text>
+  <text x="1015.5999999999999" y="588" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="606" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="32.8" y="606" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">/superpowers:systematic-debugging      </text>
+  <text x="360.40000000000003" y="606" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="368.8" y="606" fill="#ff5f5f" font-weight="normal" opacity="1" xml:space="preserve">Engineering   </text>
+  <text x="486.40000000000003" y="606" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="494.8" y="606" fill="#87d7d7" font-weight="normal" opacity="1" xml:space="preserve">claude/plugin </text>
+  <text x="612.4" y="606" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="620.8" y="606" fill="#8a8a8a" font-weight="normal" opacity="1" xml:space="preserve">Manual </text>
+  <text x="679.5999999999999" y="606" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="696.3999999999999" y="606" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">   Save to the working directory as `</text>
+  <text x="1015.5999999999998" y="606" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="624" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤</text>
+  <text x="16" y="642" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="24.4" y="642" fill="#c0c0c0" font-weight="normal" opacity="0.5" xml:space="preserve">↑↓/jk navigate  ENTER detail  / search  s sort:type  f show:all  Tab explore  q quit</text>
+  <text x="1015.6" y="642" fill="#444444" font-weight="normal" opacity="1" xml:space="preserve">│</text>
+  <text x="16" y="660" fill="#c0c0c0" font-weight="normal" opacity="1" xml:space="preserve">└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</text>
+</svg>

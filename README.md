@@ -2,6 +2,10 @@
 
 A terminal-first tool for discovering, browsing, and installing agent skills across multiple editors (Claude Code, Codex, Cursor, OpenCode, Pi). Explore remote marketplaces, search everything you have, install with a single command.
 
+![Installed Skills](screenshots/installed.svg)
+
+![Explore Tab](screenshots/explore.svg)
+
 ## Install
 
 ```bash
