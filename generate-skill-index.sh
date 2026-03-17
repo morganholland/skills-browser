@@ -320,12 +320,20 @@ with open(entries_file, 'w') as f:
     local line_count
     line_count=$(wc -l < "$skill_file" | xargs)
 
+    # Capture last-modified time (epoch seconds)
+    local last_modified
+    if [[ "$OSTYPE" == darwin* ]]; then
+        last_modified=$(stat -f%m "$skill_file" 2>/dev/null || echo 0)
+    else
+        last_modified=$(stat -c%Y "$skill_file" 2>/dev/null || echo 0)
+    fi
+
     # Resolve real path for skill file (use actual skill_file, not hardcoded SKILL.md)
     local real_path skill_basename
     skill_basename=$(basename "$skill_file")
     real_path=$(cd "$dir" && pwd -P)/${skill_basename}
 
-    echo "{\"id\":\"${name}\",\"name\":\"${fm_name}\",\"description\":\"${fm_desc}\",\"category\":\"${fm_cat}\",\"scope\":\"${scope}\",\"editor\":\"${editor}\",\"editors\":[\"${editor}\"],\"provides\":${provides_json},\"requires\":{\"mcps\":${mcps_json},\"bins\":${bins_json},\"skills\":${skills_json}},\"argumentHint\":\"${fm_arg_hint}\",\"isCompound\":${is_compound},\"subSkills\":${sub_skills_json},\"triggerCommand\":\"/${name}\",\"lineCount\":${line_count},\"skillPath\":\"${real_path}\"}" >> "$ENTRIES_FILE"
+    echo "{\"id\":\"${name}\",\"name\":\"${fm_name}\",\"description\":\"${fm_desc}\",\"category\":\"${fm_cat}\",\"scope\":\"${scope}\",\"editor\":\"${editor}\",\"editors\":[\"${editor}\"],\"provides\":${provides_json},\"requires\":{\"mcps\":${mcps_json},\"bins\":${bins_json},\"skills\":${skills_json}},\"argumentHint\":\"${fm_arg_hint}\",\"isCompound\":${is_compound},\"subSkills\":${sub_skills_json},\"triggerCommand\":\"/${name}\",\"lineCount\":${line_count},\"lastModified\":${last_modified},\"skillPath\":\"${real_path}\"}" >> "$ENTRIES_FILE"
 }
 
 # Process skills from all detected editors
@@ -433,6 +441,7 @@ for plugin_key, installs in manifest.get('plugins', {}).items():
 
         line_count = len(lines)
         trigger = f'/{plugin_name}:{skill_name}'
+        last_modified = int(os.path.getmtime(skill_file))
 
         entry = json.dumps({
             'id': skill_id,
@@ -447,6 +456,7 @@ for plugin_key, installs in manifest.get('plugins', {}).items():
             'subSkills': [],
             'triggerCommand': trigger,
             'lineCount': line_count,
+            'lastModified': last_modified,
             'plugin': plugin_name,
             'marketplace': marketplace,
             'skillPath': skill_file

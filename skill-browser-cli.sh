@@ -781,6 +781,22 @@ class Browser:
         else:
             targets = ['claude']  # Default to Claude Code
 
+        # Dependency resolution
+        dep_skills = skill.get('requires', {}).get('skills', [])
+        missing_deps = [d for d in dep_skills if d.lower() not in local_ids]
+        if missing_deps:
+            script_path = os.environ.get('SKILL_BROWSER_SCRIPT', '')
+            for dep in missing_deps:
+                self.install_status = f'Installing dependency: {dep}...'
+                self.draw()
+                if script_path:
+                    try:
+                        _sp.run(['bash', script_path, 'install', dep, '--local', '--no-deps'],
+                                capture_output=True, timeout=60)
+                        local_ids.add(dep.lower())
+                    except Exception:
+                        pass
+
         self.install_status = f'Installing {name}...'
         self.draw()
 
@@ -846,8 +862,28 @@ class Browser:
 
         # Header
         lines.append(f' {B}{CYN}{trunc(s["triggerCommand"], inner_w)}{N}')
-        lines.append(f' {tgc}{tag}{N}  {editor_c.get(editors[0], GRY)}{editors_str}/{s["scope"]}{N}  {tc}{trust}{N}')
+        # Staleness indicator
+        import time as _time
+        lm = s.get('lastModified', 0)
+        age_str = ''
+        if lm > 0:
+            age_days = int((_time.time() - lm) / 86400)
+            if age_days > 30:
+                age_str = f'  {ORA}{age_days}d old{N}'
+            elif age_days > 0:
+                age_str = f'  {D}{age_days}d ago{N}'
+        lines.append(f' {tgc}{tag}{N}  {editor_c.get(editors[0], GRY)}{editors_str}/{s["scope"]}{N}  {tc}{trust}{N}{age_str}')
         lines.append('')
+
+        # Dependencies section
+        dep_skills = s.get('requires', {}).get('skills', [])
+        if dep_skills:
+            lines.append(f' {B}Dependencies:{N}')
+            for dep in dep_skills:
+                dep_installed = dep.lower() in {sk['id'].lower() for sk in all_skills} or dep.lower() in {sk['name'].lower() for sk in all_skills}
+                indicator = f'{GRN}\u2713{N}' if dep_installed else f'{RED}\u2717{N}'
+                lines.append(f'   {indicator} {dep}')
+            lines.append('')
 
         # Description
         clean_desc = s['description'].replace('\\"', '"').replace("\\'", "'")
@@ -1104,6 +1140,14 @@ class Browser:
 
                             indicator = f'{CYN}\u25b6{N}' if is_selected else ' '
                             cmd_trunc = trunc(s['triggerCommand'], NAME_W)
+                            # Staleness badge
+                            import time as _time
+                            _lm = s.get('lastModified', 0)
+                            _age_badge = ''
+                            if _lm > 0:
+                                _age_d = int((_time.time() - _lm) / 86400)
+                                if _age_d > 30:
+                                    _age_badge = f' {D}{ORA}{_age_d}d{N}'
                             name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                             tag_s = f"{tgc}{tag:<{TAG_W}}{N}"
                             editor_label = trunc(editor_label, EDITOR_W)
@@ -1111,9 +1155,9 @@ class Browser:
                             trust_s = f"{tc}{trust:<{TRUST_W}}{N}"
 
                             if is_selected:
-                                left = f'{V}{indicator}{B}{name_s}{N}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{desc}'
+                                left = f'{V}{indicator}{B}{name_s}{N}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{desc}{_age_badge}'
                             else:
-                                left = f'{V}{indicator}{name_s}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{D}{desc}{N}'
+                                left = f'{V}{indicator}{name_s}{COL_SEP}{tag_s}{COL_SEP}{editor_s}{COL_SEP}{trust_s}{COL_SEP}{D}{desc}{N}{_age_badge}'
                             skill_idx += 1
                     else:
                         left = f'{V}'
@@ -2119,15 +2163,24 @@ case "$cmd" in
         echo -e "  ${CYAN}sb search${NC} <q> [--json] [-n N]      Search skills (non-interactive when piped)"
         echo -e "  ${CYAN}sb info${NC} <name>               Detail view (alias for show)"
         echo -e "  ${CYAN}sb show${NC} <name>               Detail view for installed skill"
-        echo -e "  ${CYAN}sb install${NC} <name> [opts]     Install a skill"
+        echo -e "  ${CYAN}sb install${NC} <name> [opts]     Install a skill (auto-resolves deps)"
         echo -e "     ${DIM}--editor <e>                 Target editor (claude|codex|cursor|opencode|pi|all)${NC}"
         echo -e "     ${DIM}--local                      Install to project .claude/skills/${NC}"
         echo -e "     ${DIM}--global                     Install to ~/.claude/skills/${NC}"
+        echo -e "     ${DIM}--no-deps                    Skip dependency auto-install${NC}"
         echo -e "  ${CYAN}sb add${NC} <name>                Install to project (alias for install --local)"
         echo -e "  ${CYAN}sb remove${NC} <name> [--local|--global]  Remove an installed skill"
         echo -e "  ${CYAN}sb update${NC} [name] [--local|--global]  Update skills from source"
         echo -e "  ${CYAN}sb validate${NC} [path]           Validate skill(s) have correct SKILL.md"
         echo -e "  ${CYAN}sb init${NC}                      Initialize .claude/skills/ directory"
+        echo ""
+        echo -e "  ${BOLD}Diagnostics & Sync:${NC}"
+        echo -e "  ${CYAN}sb why${NC} <name>                Show where a skill loads from"
+        echo -e "  ${CYAN}sb run${NC} <name> [args]         Invoke a skill via its editor CLI"
+        echo -e "  ${CYAN}sb diff${NC} [--json]             Compare local vs global vs remote"
+        echo -e "  ${CYAN}sb stale${NC} [--days N]          List skills older than N days (default 30)"
+        echo -e "  ${CYAN}sb export${NC} [--file F]         Export installed skills manifest"
+        echo -e "  ${CYAN}sb import${NC} [--file F]         Install from manifest (--dry-run)"
         echo ""
         echo -e "  ${BOLD}Non-interactive (pipeable):${NC}"
         echo -e "  ${CYAN}sb cats${NC}                      Group installed skills by category"
@@ -2931,6 +2984,7 @@ PYEOF_REMOTE_SHOW
         target_editor=""
         scope_flag=""
         name=""
+        no_deps=false
         while [ $# -gt 0 ]; do
             case "$1" in
                 --editor)
@@ -2945,6 +2999,10 @@ PYEOF_REMOTE_SHOW
                     scope_flag="--global"
                     shift
                     ;;
+                --no-deps)
+                    no_deps=true
+                    shift
+                    ;;
                 *)
                     name="$1"
                     shift
@@ -2952,8 +3010,58 @@ PYEOF_REMOTE_SHOW
             esac
         done
         if [ -z "$name" ]; then
-            echo -e "${RED}Usage: sb install <name> [--editor <e>] [--local|--global]${NC}" >&2
+            echo -e "${RED}Usage: sb install <name> [--editor <e>] [--local|--global] [--no-deps]${NC}" >&2
             exit 1
+        fi
+
+        # Dependency resolution (unless --no-deps or already in-progress)
+        if [ "$no_deps" = false ] && [ -z "${SB_INSTALLING_DEPS:-}" ]; then
+            ensure_index
+            # Check if this skill has required skills
+            deps=$(SB_NAME="$name" python3 -c "
+import json, os, sys
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+name = os.environ.get('SB_NAME', '').lower().lstrip('/')
+# Check local index
+try:
+    with open(index_path) as f:
+        data = json.load(f)
+    installed_ids = {s['name'].lower() for s in data['skills']} | {s['id'].lower() for s in data['skills']}
+    # Find the skill in remote cache to get its deps
+    remote_dir = os.path.join(cache_dir, 'remote-cache')
+    import glob
+    for f in glob.glob(os.path.join(remote_dir, '*.json')):
+        try:
+            items = json.load(open(f))
+            for s in items:
+                if s['name'].lower() == name:
+                    deps = s.get('requires', {}).get('skills', [])
+                    missing = [d for d in deps if d.lower() not in installed_ids]
+                    if missing:
+                        print(' '.join(missing))
+                    sys.exit(0)
+        except: pass
+    # Also check local index
+    for s in data['skills']:
+        if s['name'].lower() == name or s['id'].lower() == name:
+            deps = s.get('requires', {}).get('skills', [])
+            missing = [d for d in deps if d.lower() not in installed_ids]
+            if missing:
+                print(' '.join(missing))
+            break
+except Exception:
+    pass
+" 2>/dev/null)
+            if [ -n "$deps" ]; then
+                echo -e "${DIM}Installing dependencies: ${deps}${NC}" >&2
+                export SB_INSTALLING_DEPS=1
+                for dep in $deps; do
+                    echo -e "${DIM}  Installing dependency: ${dep}${NC}" >&2
+                    "$0" install "$dep" --local 2>&1 | sed 's/^/    /'
+                done
+                unset SB_INSTALLING_DEPS
+            fi
         fi
 
         # Detect editors
@@ -3074,6 +3182,518 @@ for f in glob.glob(os.path.join(os.environ.get('SB_CACHE_DIR', os.path.join(os.p
         detect_editors
         fetch_all_remote 2>/dev/null
         py_interactive "$@"
+        ;;
+    stale)
+        # List skills older than N days
+        ensure_index
+        shift  # remove 'stale'
+        python3 - "$@" << 'PYEOF_STALE'
+import json, sys, os, time
+
+SB_CACHE_DIR = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+INDEX = os.path.join(SB_CACHE_DIR, 'skill-index.json')
+
+with open(INDEX) as f:
+    data = json.load(f)
+
+args = sys.argv[1:]
+days = 30
+json_output = False
+i = 0
+while i < len(args):
+    if args[i] == '--days' and i + 1 < len(args):
+        days = int(args[i + 1])
+        i += 2
+    elif args[i] == '--json':
+        json_output = True
+        i += 1
+    else:
+        i += 1
+
+now = time.time()
+threshold = days * 86400
+stale = []
+for s in data['skills']:
+    lm = s.get('lastModified', 0)
+    if lm <= 0:
+        continue
+    age = now - lm
+    if age > threshold:
+        s['_age_days'] = int(age / 86400)
+        stale.append(s)
+
+stale.sort(key=lambda s: s['_age_days'], reverse=True)
+
+if json_output:
+    out = [{'name': s['name'], 'command': s.get('triggerCommand', '/' + s['name']),
+            'scope': s.get('scope', ''), 'age_days': s['_age_days'],
+            'lastModified': s.get('lastModified', 0),
+            'skillPath': s.get('skillPath', '')} for s in stale]
+    print(json.dumps(out, indent=2))
+else:
+    B, D, N = '\033[1m', '\033[2m', '\033[0m'
+    CYN, GRY, ORA, RED = '\033[38;5;116m', '\033[38;5;245m', '\033[38;5;214m', '\033[38;5;203m'
+    print(f'{B}Stale Skills{N}  {ORA}older than {days} days{N}  ({len(stale)} found)')
+    print()
+    if not stale:
+        print(f'  {D}No stale skills found.{N}')
+    else:
+        try: cols = os.get_terminal_size().columns
+        except: cols = 120
+        NAME_W = 35
+        AGE_W = 8
+        SCOPE_W = 10
+        DESC_W = max(cols - NAME_W - AGE_W - SCOPE_W - 8, 15)
+        print(f'  {D}{GRY}{"Command":<{NAME_W}} {"Age":<{AGE_W}} {"Scope":<{SCOPE_W}} {"Path"}{N}')
+        for s in stale:
+            cmd = s.get('triggerCommand', '/' + s['name'])
+            age_d = s['_age_days']
+            ac = RED if age_d > 90 else ORA
+            scope = s.get('scope', '?')
+            path = s.get('skillPath', '')
+            if len(path) > DESC_W:
+                path = '...' + path[-(DESC_W - 3):]
+            print(f'  {CYN}{cmd:<{NAME_W}}{N} {ac}{age_d}d{N}{" " * max(0, AGE_W - len(str(age_d)) - 1)} {GRY}{scope:<{SCOPE_W}}{N} {D}{path}{N}')
+PYEOF_STALE
+        ;;
+    why)
+        # Diagnostic: show where a skill loads from
+        ensure_index
+        detect_editors
+        shift  # remove 'why'
+        SB_QUERY="${1:-}" SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json" python3 << 'PYEOF_WHY'
+import json, os, sys
+
+B, D, N = '\033[1m', '\033[2m', '\033[0m'
+CYN, GRY, GRN, RED, ORA, PUR = '\033[38;5;116m', '\033[38;5;245m', '\033[38;5;78m', '\033[38;5;203m', '\033[38;5;214m', '\033[38;5;141m'
+
+query = os.environ.get('SB_QUERY', '').strip().lstrip('/')
+if not query:
+    print(f'{RED}Usage: sb why <name>{N}')
+    sys.exit(1)
+
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+editors_file = os.environ.get('SB_EDITORS_FILE', os.path.join(cache_dir, 'editors.json'))
+
+# Load index
+skills = []
+try:
+    with open(index_path) as f:
+        skills = json.load(f).get('skills', [])
+except Exception:
+    pass
+
+# Load editors
+editors = []
+try:
+    with open(editors_file) as f:
+        editors = json.load(f)
+except Exception:
+    pass
+
+# Exact match first, then fuzzy
+match = next((s for s in skills if s['id'].lower() == query.lower() or s['name'].lower() == query.lower()), None)
+if not match:
+    candidates = [s for s in skills if query.lower() in s['id'].lower() or query.lower() in s['name'].lower()]
+    if len(candidates) == 1:
+        match = candidates[0]
+
+if match:
+    print(f'{B}Found:{N} {CYN}{match.get("triggerCommand", "/" + match["name"])}{N}')
+    print()
+    skill_path = match.get('skillPath', '')
+    print(f'  {B}Skill path:{N}  {skill_path}')
+
+    # Resolve symlink chain
+    if skill_path and os.path.exists(skill_path):
+        path = skill_path
+        chain = [path]
+        while os.path.islink(path):
+            target = os.readlink(path)
+            if not os.path.isabs(target):
+                target = os.path.join(os.path.dirname(path), target)
+            target = os.path.normpath(target)
+            chain.append(target)
+            path = target
+            if len(chain) > 10:
+                break
+        if len(chain) > 1:
+            print(f'  {B}Symlink chain:{N}')
+            for i, p in enumerate(chain):
+                pfx = '  \u2514 ' if i == len(chain) - 1 else '  \u251c '
+                exists = f'{GRN}\u2713{N}' if os.path.exists(p) else f'{RED}\u2717{N}'
+                print(f'    {pfx}{exists} {p}')
+        else:
+            exists = f'{GRN}exists{N}' if os.path.exists(path) else f'{RED}missing{N}'
+            print(f'  {B}File:{N}        {exists} (not a symlink)')
+    elif skill_path:
+        print(f'  {B}File:{N}        {RED}missing{N}')
+
+    scope = match.get('scope', '?')
+    eds = match.get('editors', [match.get('editor', 'claude')])
+    print(f'  {B}Scope:{N}       {scope}')
+    print(f'  {B}Editors:{N}     {", ".join(eds)}')
+    print(f'  {B}In index:{N}    {GRN}yes{N}')
+
+    # Last modified
+    import time
+    lm = match.get('lastModified', 0)
+    if lm > 0:
+        age_days = int((time.time() - lm) / 86400)
+        lm_str = time.strftime('%Y-%m-%d %H:%M', time.localtime(lm))
+        print(f'  {B}Modified:{N}    {lm_str} ({age_days}d ago)')
+
+    # Dependencies
+    dep_skills = match.get('requires', {}).get('skills', [])
+    if dep_skills:
+        local_ids = {s['id'].lower() for s in skills} | {s['name'].lower() for s in skills}
+        print(f'  {B}Deps:{N}')
+        for dep in dep_skills:
+            installed = dep.lower() in local_ids
+            indicator = f'{GRN}\u2713{N}' if installed else f'{RED}\u2717 missing{N}'
+            print(f'    {indicator} {dep}')
+
+else:
+    print(f'{ORA}"{query}" not found in index.{N}')
+    print()
+
+    # Show all scanned directories
+    print(f'{B}Scanned directories:{N}')
+    for e in editors:
+        found = e.get('found', False)
+        status = f'{GRN}\u2713{N}' if found else f'{RED}\u2717{N}'
+        print(f'  {status} {B}{e["name"]}{N}')
+        gdir = e.get('global', '')
+        if os.path.isdir(gdir):
+            print(f'    global: {GRN}{gdir}{N}')
+        else:
+            print(f'    global: {D}{gdir} (not found){N}')
+        ldir = e.get('local', '')
+        if ldir:
+            full_local = os.path.join(os.getcwd(), ldir)
+            if os.path.isdir(full_local):
+                print(f'    local:  {GRN}{full_local}{N}')
+            else:
+                print(f'    local:  {D}{full_local} (not found){N}')
+
+    # Partial matches
+    partial = [s for s in skills if query.lower() in s['id'].lower() or query.lower() in s['name'].lower()]
+    if partial:
+        print()
+        print(f'{B}Partial matches:{N}')
+        for s in partial[:10]:
+            print(f'  {CYN}{s.get("triggerCommand", "/" + s["name"])}{N}  {D}{s.get("description", "")[:60]}{N}')
+PYEOF_WHY
+        ;;
+    diff)
+        # Compare local vs global vs remote
+        ensure_index
+        detect_editors
+        shift  # remove 'diff'
+        python3 - "$@" << 'PYEOF_DIFF'
+import json, sys, os, glob as _glob
+
+SB_CACHE_DIR = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+INDEX = os.path.join(SB_CACHE_DIR, 'skill-index.json')
+REMOTE_CACHE_DIR = os.path.join(SB_CACHE_DIR, 'remote-cache')
+
+with open(INDEX) as f:
+    data = json.load(f)
+
+args = sys.argv[1:]
+json_output = '--json' in args
+
+# Partition installed skills
+local_set = set()
+global_set = set()
+all_installed = set()
+for s in data['skills']:
+    name = s['name'].lower()
+    all_installed.add(name)
+    scope = s.get('scope', '')
+    if scope in ('local', 'both'):
+        local_set.add(name)
+    if scope in ('global', 'both'):
+        global_set.add(name)
+
+# Load remote skills
+remote_set = set()
+if os.path.isdir(REMOTE_CACHE_DIR):
+    for f in _glob.glob(os.path.join(REMOTE_CACHE_DIR, '*.json')):
+        try:
+            items = json.load(open(f))
+            if isinstance(items, list):
+                for item in items:
+                    remote_set.add(item['name'].lower())
+        except Exception:
+            pass
+
+local_only = local_set - global_set
+global_only = global_set - local_set
+both = local_set & global_set
+remote_only = remote_set - all_installed
+
+if json_output:
+    print(json.dumps({
+        'local_only': sorted(local_only),
+        'global_only': sorted(global_only),
+        'both': sorted(both),
+        'remote_only': sorted(remote_only),
+    }, indent=2))
+else:
+    B, D, N = '\033[1m', '\033[2m', '\033[0m'
+    GRN, PUR, ORA, GRY, CYN, BLU = '\033[38;5;78m', '\033[38;5;141m', '\033[38;5;214m', '\033[38;5;245m', '\033[38;5;116m', '\033[38;5;75m'
+
+    print(f'{B}Skill Diff{N}')
+    print()
+
+    if both:
+        print(f'  {B}{ORA}Both local + global ({len(both)}):{N}')
+        for n in sorted(both):
+            print(f'    {CYN}/{n}{N}')
+        print()
+
+    if local_only:
+        print(f'  {B}{GRN}Local only ({len(local_only)}):{N}')
+        for n in sorted(local_only):
+            print(f'    {CYN}/{n}{N}')
+        print()
+
+    if global_only:
+        print(f'  {B}{PUR}Global only ({len(global_only)}):{N}')
+        for n in sorted(global_only):
+            print(f'    {CYN}/{n}{N}')
+        print()
+
+    if remote_only:
+        print(f'  {B}{BLU}Remote only / not installed ({len(remote_only)}):{N}')
+        for n in sorted(list(remote_only)[:20]):
+            print(f'    {D}/{n}{N}')
+        if len(remote_only) > 20:
+            print(f'    {D}... and {len(remote_only) - 20} more{N}')
+        print()
+
+    total = len(all_installed)
+    print(f'  {D}Installed: {total} total  |  {len(local_set)} local  |  {len(global_set)} global  |  {len(remote_only)} available remotely{N}')
+PYEOF_DIFF
+        ;;
+    run)
+        # Invoke a skill via its editor CLI
+        ensure_index
+        shift  # remove 'run'
+        name="${1:-}"
+        if [ -z "$name" ]; then
+            echo -e "${RED}Usage: sb run <name> [args...]${NC}" >&2
+            exit 1
+        fi
+        shift  # remove name
+        run_args="$*"
+        name="${name#/}"  # strip leading /
+
+        SB_NAME="$name" SB_ARGS="$run_args" python3 << 'PYEOF_RUN'
+import json, os, sys
+
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+editors_file = os.path.join(cache_dir, 'editors.json')
+
+B, D, N = '\033[1m', '\033[2m', '\033[0m'
+CYN, GRY, RED, GRN = '\033[38;5;116m', '\033[38;5;245m', '\033[38;5;203m', '\033[38;5;78m'
+
+name = os.environ.get('SB_NAME', '')
+args = os.environ.get('SB_ARGS', '')
+
+with open(index_path) as f:
+    skills = json.load(f).get('skills', [])
+
+# Exact match first, then fuzzy
+match = next((s for s in skills if s['id'].lower() == name.lower() or s['name'].lower() == name.lower()), None)
+if not match:
+    candidates = [s for s in skills if name.lower() in s['id'].lower() or name.lower() in s['name'].lower()]
+    if len(candidates) == 1:
+        match = candidates[0]
+    elif candidates:
+        print(f'{RED}Multiple matches:{N}')
+        for c in candidates:
+            print(f'  {CYN}{c.get("triggerCommand", "/" + c["name"])}{N}')
+        sys.exit(1)
+    else:
+        print(f'{RED}Skill "{name}" not found{N}')
+        sys.exit(1)
+
+# Determine primary editor
+editors_list = match.get('editors', [match.get('editor', 'claude')])
+primary = editors_list[0] if editors_list else 'claude'
+
+skill_cmd = match.get('triggerCommand', '/' + match['name'])
+if args:
+    prompt = f'{skill_cmd} {args}'
+else:
+    prompt = skill_cmd
+
+import shutil
+if primary == 'claude':
+    claude_bin = shutil.which('claude')
+    if claude_bin:
+        print(f'{D}Running: claude -p "{prompt}"{N}', file=sys.stderr)
+        os.execvp(claude_bin, ['claude', '-p', prompt])
+    else:
+        print(f'{RED}claude binary not found. Run manually:{N}')
+        print(f'  claude -p "{prompt}"')
+elif primary == 'codex':
+    codex_bin = shutil.which('codex')
+    if codex_bin:
+        print(f'{D}Running: codex "{prompt}"{N}', file=sys.stderr)
+        os.execvp(codex_bin, ['codex', prompt])
+    else:
+        print(f'{RED}codex binary not found. Run manually:{N}')
+        print(f'  codex "{prompt}"')
+elif primary == 'cursor':
+    cursor_bin = shutil.which('cursor')
+    if cursor_bin:
+        print(f'{D}Running: cursor --chat "{prompt}"{N}', file=sys.stderr)
+        os.execvp(cursor_bin, ['cursor', '--chat', prompt])
+    else:
+        print(f'{RED}cursor binary not found. Run manually:{N}')
+        print(f'  cursor --chat "{prompt}"')
+else:
+    print(f'{D}Editor: {primary}{N}')
+    print(f'{D}Command: {prompt}{N}')
+    print(f'{RED}No known invocation for {primary}. Run the skill manually.{N}')
+PYEOF_RUN
+        ;;
+    export)
+        # Export installed skills manifest
+        ensure_index
+        shift  # remove 'export'
+        output_file="skills-manifest.json"
+        for arg in "$@"; do
+            case "$arg" in
+                --file) : ;;
+                *) [ "$prev_arg" = "--file" ] && output_file="$arg" ;;
+            esac
+            prev_arg="$arg"
+        done
+        SB_OUTPUT="$output_file" python3 << 'PYEOF_EXPORT'
+import json, os, sys
+
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+output_file = os.environ.get('SB_OUTPUT', 'skills-manifest.json')
+
+B, D, N = '\033[1m', '\033[2m', '\033[0m'
+GRN, GRY, CYN = '\033[38;5;78m', '\033[38;5;245m', '\033[38;5;116m'
+
+with open(index_path) as f:
+    data = json.load(f)
+
+manifest = {
+    'version': 1,
+    'generatedAt': data.get('generatedAt', ''),
+    'skills': []
+}
+
+for s in data['skills']:
+    entry = {
+        'name': s['name'],
+        'scope': s.get('scope', 'unknown'),
+        'editors': s.get('editors', [s.get('editor', 'claude')]),
+    }
+    if s.get('plugin'):
+        entry['plugin'] = s['plugin']
+        entry['marketplace'] = s.get('marketplace', '')
+    manifest['skills'].append(entry)
+
+manifest['skills'].sort(key=lambda s: s['name'])
+
+with open(output_file, 'w') as f:
+    json.dump(manifest, f, indent=2)
+
+print(f'{GRN}Exported {len(manifest["skills"])} skills to {CYN}{output_file}{N}')
+PYEOF_EXPORT
+        ;;
+    import)
+        # Import skills from manifest
+        shift  # remove 'import'
+        input_file="skills-manifest.json"
+        dry_run=false
+        prev_arg=""
+        for arg in "$@"; do
+            case "$arg" in
+                --dry-run) dry_run=true ;;
+                --file) : ;;
+                *) [ "$prev_arg" = "--file" ] && input_file="$arg" ;;
+            esac
+            prev_arg="$arg"
+        done
+        if [ ! -f "$input_file" ]; then
+            echo -e "${RED}Manifest not found: ${input_file}${NC}" >&2
+            exit 1
+        fi
+        ensure_index
+        detect_editors
+        SB_INPUT="$input_file" SB_DRY_RUN="$dry_run" SB_SCRIPT="$0" SB_EDITORS_FILE="$SB_CACHE_DIR/editors.json" python3 << 'PYEOF_IMPORT'
+import json, os, sys, subprocess
+
+cache_dir = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+index_path = os.path.join(cache_dir, 'skill-index.json')
+input_file = os.environ.get('SB_INPUT', 'skills-manifest.json')
+dry_run = os.environ.get('SB_DRY_RUN', 'false') == 'true'
+script_path = os.environ.get('SB_SCRIPT', '')
+
+B, D, N = '\033[1m', '\033[2m', '\033[0m'
+GRN, GRY, CYN, RED, ORA = '\033[38;5;78m', '\033[38;5;245m', '\033[38;5;116m', '\033[38;5;203m', '\033[38;5;214m'
+
+with open(input_file) as f:
+    manifest = json.load(f)
+
+with open(index_path) as f:
+    data = json.load(f)
+
+installed_ids = {s['name'].lower() for s in data['skills']}
+installed_ids.update(s['id'].lower() for s in data['skills'])
+
+manifest_skills = manifest.get('skills', [])
+missing = [s for s in manifest_skills if s['name'].lower() not in installed_ids]
+already = len(manifest_skills) - len(missing)
+
+print(f'{B}Import from {CYN}{input_file}{N}')
+print(f'  {D}{len(manifest_skills)} in manifest, {already} already installed, {len(missing)} to install{N}')
+print()
+
+if not missing:
+    print(f'{GRN}All skills already installed.{N}')
+    sys.exit(0)
+
+for s in missing:
+    scope = s.get('scope', 'local')
+    scope_flag = '--local' if scope in ('local', 'both') else '--global'
+    if dry_run:
+        print(f'  {D}[dry-run]{N} Would install: {CYN}{s["name"]}{N} ({scope_flag})')
+    else:
+        print(f'  Installing: {CYN}{s["name"]}{N} ({scope_flag})...', end=' ', flush=True)
+        try:
+            r = subprocess.run(
+                ['bash', script_path, 'install', s['name'], scope_flag],
+                capture_output=True, text=True, timeout=60
+            )
+            if r.returncode == 0:
+                print(f'{GRN}OK{N}')
+            else:
+                print(f'{RED}FAILED{N}')
+                if r.stderr.strip():
+                    print(f'    {D}{r.stderr.strip()[:100]}{N}')
+        except Exception as e:
+            print(f'{RED}ERROR: {e}{N}')
+
+if dry_run:
+    print()
+    print(f'{ORA}Dry run complete. Run without --dry-run to install.{N}')
+else:
+    print()
+    print(f'{GRN}Import complete.{N}')
+PYEOF_IMPORT
         ;;
     *)
         ensure_index
