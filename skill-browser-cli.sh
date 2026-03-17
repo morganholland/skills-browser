@@ -997,7 +997,7 @@ class Browser:
                 longest_name = max(len(s['triggerCommand']) for s in self.filtered)
             else:
                 longest_name = 20
-            NAME_W = min(max(longest_name + 2, 20), LIST_W // 2)
+            NAME_W = min(max(longest_name + 2, 20), 35)
             TAG_W = 14
             EDITOR_W = 14
             TRUST_W = 9
@@ -1103,7 +1103,8 @@ class Browser:
                                 editor_label = primary_editor + '/' + s['scope']
 
                             indicator = f'{CYN}\u25b6{N}' if is_selected else ' '
-                            name_s = f"{CYN}{s['triggerCommand']:<{NAME_W}}{N}"
+                            cmd_trunc = trunc(s['triggerCommand'], NAME_W)
+                            name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                             tag_s = f"{tgc}{tag:<{TAG_W}}{N}"
                             editor_s = f"{ec}{editor_label:<{EDITOR_W}}{N}"
                             trust_s = f"{tc}{trust:<{TRUST_W}}{N}"
@@ -1136,7 +1137,7 @@ class Browser:
                 longest_name = max(len(s.get('triggerCommand', '/' + s['name'])) for s in rf)
             else:
                 longest_name = 20
-            NAME_W = min(max(longest_name + 2, 20), LIST_W // 2)
+            NAME_W = min(max(longest_name + 2, 20), 35)
             REPO_W = 14
             STATUS_W = 10
             fixed_w = NAME_W + REPO_W + STATUS_W + 3
@@ -1196,7 +1197,8 @@ class Browser:
                     desc = trunc(s.get('description', ''), DESC_W)
 
                     indicator = f'{CYN}\u25b6{N}' if is_selected else ' '
-                    name_s = f"{CYN}{cmd:<{NAME_W}}{N}"
+                    cmd_trunc = trunc(cmd, NAME_W)
+                    name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                     repo_s = f"{ORA}{repo_label:<{REPO_W}}{N}"
 
                     if is_selected:
