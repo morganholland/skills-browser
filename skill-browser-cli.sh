@@ -1106,6 +1106,7 @@ class Browser:
                             cmd_trunc = trunc(s['triggerCommand'], NAME_W)
                             name_s = f"{CYN}{cmd_trunc:<{NAME_W}}{N}"
                             tag_s = f"{tgc}{tag:<{TAG_W}}{N}"
+                            editor_label = trunc(editor_label, EDITOR_W)
                             editor_s = f"{ec}{editor_label:<{EDITOR_W}}{N}"
                             trust_s = f"{tc}{trust:<{TRUST_W}}{N}"
 
