@@ -24,6 +24,8 @@ Requires bash 4+, python3, and `gh` CLI.
 sb                          # Interactive TUI browser
 sb explore                  # Browse remote marketplaces
 sb search <query>           # Search (TUI when interactive, plain text when piped)
+sb ai <query>               # Natural language search (uses Claude CLI)
+sb ai <query> --json        # AI search with JSON output
 
 sb list                     # List installed skills
 sb list --json              # JSON output
@@ -53,7 +55,7 @@ sb import --dry-run         # Preview what would be installed
 
 ## Discovering Skills
 
-The TUI has two tabs: **Installed** (your skills across all editors) and **Explore** (remote marketplaces). Use `/` to search, `f` to filter, `Tab` to switch tabs, `i` to install.
+The TUI has two tabs: **Installed** (your skills across all editors) and **Explore** (remote marketplaces). Use `/` to search, `?` for AI-powered natural language search, `f` to filter, `Tab` to switch tabs, `i` to install.
 
 Built-in marketplaces:
 
@@ -99,6 +101,7 @@ sb install polaris --editor all
 | `sb` | Interactive TUI browser |
 | `sb explore` | Launch on Explore tab |
 | `sb search <q> [--json] [-n N]` | Search skills |
+| `sb ai <query> [--json]` | Natural language search (uses Claude) |
 | `sb list [--local\|--global\|--json]` | List installed skills |
 | `sb show <name>` / `sb info <name>` | Detail view |
 | `sb install <name> [--editor <e>] [--local\|--global] [--no-deps]` | Install a skill (auto-resolves deps) |
@@ -126,7 +129,8 @@ sb install polaris --editor all
 |-----|--------|
 | `j`/`k`, arrows | Navigate |
 | `Enter` | Detail / load SKILL.md |
-| `/` | Search |
+| `/` | Keyword search |
+| `?` | AI search (natural language, uses Claude) |
 | `f` | Cycle filter |
 | `s` | Toggle sort |
 | `i` | Install (Explore tab) |

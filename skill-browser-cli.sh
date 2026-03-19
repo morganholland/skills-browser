@@ -545,6 +545,11 @@ class Browser:
         self.remote_filtered = []
         self.install_status = ''  # status message for footer
         self._remote_content_cache = {}  # skill_id -> SKILL.md content (or None)
+        # AI search state
+        self.ai_searching = False   # input mode for AI query
+        self.ai_query = ''          # query being typed
+        self.ai_results = None      # list of {name, score, reason} or None
+        self.ai_status = ''         # "Thinking...", "AI: 5 results", etc.
         self.filter_skills()
         self.filter_remote_skills()
 
@@ -606,6 +611,135 @@ class Browser:
             self.remote_filtered = sorted(pool, key=lambda s: (s.get('owner', ''), s['name'].lower()))
         if self.remote_cursor >= len(self.remote_filtered):
             self.remote_cursor = max(0, len(self.remote_filtered) - 1)
+
+    def _run_ai_search(self, query):
+        """Run AI-powered natural language search using claude CLI."""
+        import subprocess as _sp
+        self.ai_status = 'Thinking...'
+        self.draw()
+
+        # Build compact catalog
+        catalog = []
+        for s in all_skills:
+            entry = {'name': s['name']}
+            desc = s.get('description', '')
+            if len(desc) > 120:
+                desc = desc[:117] + '...'
+            entry['description'] = desc
+            if s.get('provides'):
+                entry['provides'] = s['provides']
+            if s.get('category'):
+                entry['category'] = s['category']
+            if s.get('triggerCommand'):
+                entry['triggerCommand'] = s['triggerCommand']
+            catalog.append(entry)
+
+        name_map = {s['name'].lower(): s for s in all_skills}
+
+        prompt = (
+            'You are a skill search engine. Given a catalog of agent skills and '
+            'the user\'s natural language query, return the most relevant skills '
+            '(up to 7), ranked by relevance.\n\n'
+            f'CATALOG:\n{json.dumps(catalog)}\n\n'
+            f'QUERY: "{query}"\n\n'
+            'Return JSON with a "matches" array. For each match: name (exact skill '
+            'name from catalog), score (1-10 relevance), reason (one sentence '
+            'why it matches). Return ONLY the JSON object, no markdown formatting.'
+        )
+
+        # Find claude binary
+        claude_bin = None
+        import shutil as _shutil
+        claude_bin = _shutil.which('claude')
+        if not claude_bin:
+            nix_path = os.path.expanduser('~/.local/state/tec/profiles/base/current/global/bin/claude')
+            if os.path.isfile(nix_path) and os.access(nix_path, os.X_OK):
+                claude_bin = nix_path
+
+        if not claude_bin:
+            self.ai_status = 'claude CLI not found'
+            self.ai_results = None
+            return
+
+        try:
+            result = _sp.run(
+                [claude_bin, '-p', '--output-format', 'json',
+                 '--model', 'haiku', '--system-prompt',
+                 'You are a skill search engine. Return ONLY valid JSON with a "matches" array. No markdown, no explanation.',
+                 '--disable-slash-commands', '--permission-mode', 'bypassPermissions', '-'],
+                input=prompt, capture_output=True, text=True, timeout=60
+            )
+        except _sp.TimeoutExpired:
+            self.ai_status = 'AI search timed out'
+            self.ai_results = None
+            return
+        except Exception:
+            self.ai_status = 'AI search failed'
+            self.ai_results = None
+            return
+
+        if result.returncode != 0:
+            self.ai_status = 'AI search failed'
+            self.ai_results = None
+            return
+
+        # Parse response
+        import re as _re
+        raw = result.stdout.strip()
+        matches_data = None
+        try:
+            outer = json.loads(raw)
+            result_text = outer.get('result', '')
+            try:
+                matches_data = json.loads(result_text)
+            except (json.JSONDecodeError, TypeError):
+                pass
+            if not matches_data:
+                json_match = _re.search(r'```(?:json)?\s*(\{.*?\})\s*```', result_text, _re.DOTALL)
+                if json_match:
+                    try:
+                        matches_data = json.loads(json_match.group(1))
+                    except json.JSONDecodeError:
+                        pass
+            if not matches_data:
+                json_match = _re.search(r'\{[^{}]*"matches"\s*:\s*\[.*?\]\s*\}', result_text, _re.DOTALL)
+                if json_match:
+                    try:
+                        matches_data = json.loads(json_match.group())
+                    except json.JSONDecodeError:
+                        pass
+        except json.JSONDecodeError:
+            pass
+
+        if not matches_data:
+            self.ai_status = 'Could not parse AI response'
+            self.ai_results = None
+            return
+
+        matches = matches_data.get('matches', [])
+        if not matches:
+            self.ai_status = f'AI: no results for "{query}"'
+            self.ai_results = []
+            self.filtered = []
+            self.cursor = 0
+            return
+
+        # Map results to skill objects, preserving LLM ranking
+        self.ai_results = matches
+        matched_skills = []
+        for m in matches:
+            skill = name_map.get(m['name'].lower())
+            if skill:
+                # Attach AI metadata for display
+                skill = dict(skill)
+                skill['_ai_score'] = m.get('score', 0)
+                skill['_ai_reason'] = m.get('reason', '')
+                matched_skills.append(skill)
+
+        self.filtered = matched_skills
+        self.cursor = 0
+        self.scroll = 0
+        self.ai_status = f'AI: {len(matched_skills)} results for "{query}"'
 
     def move_remote_cursor(self, new_pos):
         new_pos = max(0, min(new_pos, len(self.remote_filtered) - 1))
@@ -743,7 +877,7 @@ class Browser:
             for doc in candidates:
                 try:
                     api_path = f'repos/{s["repo"]}/contents/{s["remote_path"]}/{doc}'
-                    r = _sp.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=15)
+                    r = _sp.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=30)
                     if r.returncode == 0:
                         data_resp = json.loads(r.stdout)
                         if data_resp.get('content'):
@@ -1004,7 +1138,13 @@ class Browser:
             tab_ansi = f' {D}1 Installed{N}  {INVR} 2 Explore {N}'
             count_label = f'{len(self.remote_filtered)}/{len(remote_skills)}'
 
-        if self.searching:
+        if self.ai_searching:
+            search_vis = '  ? ' + self.ai_query + '\u2588'
+            search_ansi = f'  {PUR}?{N} {self.ai_query}\u2588'
+        elif self.ai_status:
+            search_vis = '  ' + self.ai_status
+            search_ansi = f'  {PUR}{self.ai_status}{N}'
+        elif self.searching:
             search_vis = '  / ' + self.search + '\u2588'
             search_ansi = f'  {GRN}/{N} {self.search}\u2588'
         elif self.search:
@@ -1159,10 +1299,14 @@ class Browser:
 
                 # Footer: separator + shortcuts + bottom border
                 buf.append(f'{SEP}\u251c{"\u2500" * (cols - 2)}\u2524{N}')
-                if self.searching:
+                if self.ai_searching:
+                    keys_vis = 'Type question  ENTER search  ESC cancel'
+                elif self.ai_results is not None:
+                    keys_vis = 'ESC clear  ? new AI search  / keyword search  Tab explore  q quit'
+                elif self.searching:
                     keys_vis = '\u2191\u2193 navigate  ENTER select  ESC clear  s sort:' + self.sort_mode + '  f show:' + self.scope_filter + '  Tab explore  q quit'
                 else:
-                    keys_vis = '\u2191\u2193/jk navigate  ENTER detail  / search  s sort:' + self.sort_mode + '  f show:' + self.scope_filter + '  Tab explore  q quit'
+                    keys_vis = '\u2191\u2193/jk navigate  ENTER detail  / search  ? AI search  s sort:' + self.sort_mode + '  f show:' + self.scope_filter + '  Tab explore  q quit'
                 keys_vis = keys_vis[:inner]
                 buf.append(padrow(keys_vis, f'{D}{keys_vis}{N}'))
                 buf.append(f'{SEP}\u2514{"\u2500" * (cols - 2)}\u2518{N}')
@@ -1254,10 +1398,12 @@ class Browser:
                 keys_vis = self.install_status + '  '
             else:
                 keys_vis = ''
-            if self.searching:
+            if self.ai_searching:
+                keys_vis += 'Type question  ENTER search  ESC cancel'
+            elif self.searching:
                 keys_vis += '\u2191\u2193 navigate  ESC clear  Tab installed  q quit'
             else:
-                keys_vis += '\u2191\u2193/jk navigate  / search  f show:' + self.explore_filter + '  i install  R refresh  Tab installed  q quit'
+                keys_vis += '\u2191\u2193/jk navigate  / search  ? AI search  f show:' + self.explore_filter + '  i install  R refresh  Tab installed  q quit'
             keys_vis = keys_vis[:inner]
             buf.append(padrow(keys_vis, f'{D}{keys_vis}{N}'))
             buf.append(f'{SEP}\u2514{"\u2500" * (cols - 2)}\u2518{N}')
@@ -1347,6 +1493,22 @@ class Browser:
                 self.detail_scroll = max(0, self.detail_scroll - (rows - 5))
             return
 
+        if self.ai_searching:
+            if key == 'esc':
+                self.ai_searching = False
+                self.ai_query = ''
+                self.ai_results = None
+                self.ai_status = ''
+                self.filter_skills()
+            elif key == 'enter' and self.ai_query.strip():
+                self.ai_searching = False
+                self._run_ai_search(self.ai_query)
+            elif key == 'backspace':
+                self.ai_query = self.ai_query[:-1]
+            elif len(key) == 1 and key.isprintable():
+                self.ai_query += key
+            return
+
         if self.searching:
             if key == 'esc':
                 self.searching = False
@@ -1407,6 +1569,11 @@ class Browser:
                 self.searching = True
                 self.search = ''
                 self.install_status = ''
+            elif key == '?':
+                self.ai_searching = True
+                self.ai_query = ''
+                self.ai_results = None
+                self.ai_status = ''
             elif key == 'enter':
                 # Fetch full SKILL.md for current skill
                 if self.remote_filtered:
@@ -1456,7 +1623,11 @@ class Browser:
                 self.explore_filter = self.EXPLORE_FILTERS[(idx + 1) % len(self.EXPLORE_FILTERS)]
                 self.filter_remote_skills()
             elif key == 'esc':
-                if self.search:
+                if self.ai_results is not None:
+                    self.ai_results = None
+                    self.ai_status = ''
+                    self.filter_remote_skills()
+                elif self.search:
                     self.search = ''
                     self.filter_remote_skills()
         else:
@@ -1479,6 +1650,11 @@ class Browser:
             elif key == '/':
                 self.searching = True
                 self.search = ''
+            elif key == '?':
+                self.ai_searching = True
+                self.ai_query = ''
+                self.ai_results = None
+                self.ai_status = ''
             elif key == 's':
                 idx = self.SORT_MODES.index(self.sort_mode)
                 self.sort_mode = self.SORT_MODES[(idx + 1) % len(self.SORT_MODES)]
@@ -1492,7 +1668,11 @@ class Browser:
                     self.detail_skill = self.filtered[self.cursor]
                     self.detail_scroll = 0
             elif key == 'esc':
-                if self.search:
+                if self.ai_results is not None:
+                    self.ai_results = None
+                    self.ai_status = ''
+                    self.filter_skills()
+                elif self.search:
                     self.search = ''
                     self.filter_skills()
 
@@ -2153,6 +2333,7 @@ case "$cmd" in
         echo -e "  ${BOLD}Skill Management:${NC}"
         echo -e "  ${CYAN}sb list${NC} [--local|--global|--json]   List installed skills"
         echo -e "  ${CYAN}sb search${NC} <q> [--json] [-n N]      Search skills (non-interactive when piped)"
+        echo -e "  ${CYAN}sb ai${NC} <query> [--json]              Natural language search (uses Claude)"
         echo -e "  ${CYAN}sb info${NC} <name>               Detail view (alias for show)"
         echo -e "  ${CYAN}sb show${NC} <name>               Detail view for installed skill"
         echo -e "  ${CYAN}sb install${NC} <name> [opts]     Install a skill (auto-resolves deps)"
@@ -2193,7 +2374,7 @@ case "$cmd" in
         echo -e "  ${CYAN}sb fetch-remote${NC}             Refresh remote skill/plugin cache"
         echo -e "  ${CYAN}sb web${NC}                      Open the HTML browser"
         echo ""
-        echo -e "  ${DIM}TUI keys: \u2191\u2193/jk navigate  ENTER detail  / search  f filter  Tab switch tab  q quit${NC}"
+        echo -e "  ${DIM}TUI keys: \u2191\u2193/jk navigate  ENTER detail  / search  ? AI search  f filter  Tab switch tab  q quit${NC}"
         echo -e "  ${DIM}Explore:  i install  f show:all/skills/plugins  R refresh  Tab switch back${NC}"
         ;;
     fetch-remote)
@@ -2355,6 +2536,177 @@ PYEOF_SEARCH
             fetch_all_remote 2>/dev/null
             py_interactive search "$query"
         fi
+        ;;
+    ai)
+        # Natural language search using Claude CLI
+        shift  # remove 'ai'
+        is_json=false
+        query_parts=()
+        for arg in "$@"; do
+            case "$arg" in
+                --json) is_json=true ;;
+                *) query_parts+=("$arg") ;;
+            esac
+        done
+        query="${query_parts[*]:-}"
+        if [ -z "$query" ]; then
+            echo -e "${RED}Usage: sb ai <natural language query>${NC}" >&2
+            echo -e "${DIM}Example: sb ai \"something to help me write better commit messages\"${NC}" >&2
+            exit 1
+        fi
+
+        # Find claude binary
+        CLAUDE_BIN=""
+        if command -v claude >/dev/null 2>&1; then
+            CLAUDE_BIN="claude"
+        elif [ -x "$HOME/.local/state/tec/profiles/base/current/global/bin/claude" ]; then
+            CLAUDE_BIN="$HOME/.local/state/tec/profiles/base/current/global/bin/claude"
+        fi
+        if [ -z "$CLAUDE_BIN" ]; then
+            echo -e "${RED}claude CLI not found. Install Claude Code or use 'sb search' for keyword search.${NC}" >&2
+            exit 1
+        fi
+
+        ensure_index
+
+        # Build compact catalog and run AI search
+        SB_AI_QUERY="$query" SB_AI_JSON="$is_json" SB_CLAUDE_BIN="$CLAUDE_BIN" python3 << 'PYEOF_AI'
+import json, sys, os, subprocess
+
+SB_CACHE_DIR = os.environ.get('SB_CACHE_DIR', os.path.join(os.environ.get('XDG_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache')), 'skill-browser'))
+INDEX = os.path.join(SB_CACHE_DIR, 'skill-index.json')
+query = os.environ.get('SB_AI_QUERY', '')
+is_json = os.environ.get('SB_AI_JSON', 'false') == 'true'
+claude_bin = os.environ.get('SB_CLAUDE_BIN', 'claude')
+
+with open(INDEX) as f:
+    data = json.load(f)
+
+# Build compact catalog
+catalog = []
+for s in data['skills']:
+    entry = {'name': s['name']}
+    desc = s.get('description', '')
+    if len(desc) > 120:
+        desc = desc[:117] + '...'
+    entry['description'] = desc
+    if s.get('provides'):
+        entry['provides'] = s['provides']
+    if s.get('category'):
+        entry['category'] = s['category']
+    if s.get('triggerCommand'):
+        entry['triggerCommand'] = s['triggerCommand']
+    catalog.append(entry)
+
+# Build name lookup for matching results back
+name_map = {s['name'].lower(): s for s in data['skills']}
+
+prompt = f"""You are a skill search engine. Given a catalog of agent skills and the user's natural language query, return the most relevant skills (up to 7), ranked by relevance.
+
+CATALOG:
+{json.dumps(catalog)}
+
+QUERY: "{query}"
+
+Return JSON with a "matches" array. For each match: name (exact skill name from catalog), score (1-10 relevance), reason (one sentence why it matches).
+Return ONLY the JSON object, no markdown formatting."""
+
+D = '\033[2m'
+N = '\033[0m'
+CYN = '\033[38;5;116m'
+PRP = '\033[38;5;141m'
+GRY = '\033[38;5;245m'
+
+print(f'{D}Searching with AI...{N}', file=sys.stderr)
+
+try:
+    result = subprocess.run(
+        [claude_bin, '-p', '--output-format', 'json',
+         '--model', 'haiku', '--system-prompt',
+         'You are a skill search engine. Return ONLY valid JSON with a "matches" array. No markdown, no explanation.',
+         '--disable-slash-commands', '--permission-mode', 'bypassPermissions', '-'],
+        input=prompt, capture_output=True, text=True, timeout=60
+    )
+except subprocess.TimeoutExpired:
+    print(f'\033[38;5;203mAI search timed out. Try \'sb search {query}\' instead.\033[0m', file=sys.stderr)
+    sys.exit(1)
+except FileNotFoundError:
+    print(f'\033[38;5;203mclaude CLI not found. Install Claude Code or use \'sb search\' for keyword search.\033[0m', file=sys.stderr)
+    sys.exit(1)
+
+if result.returncode != 0:
+    print(f'\033[38;5;203mAI search failed. Try \'sb search {query}\' instead.\033[0m', file=sys.stderr)
+    sys.exit(1)
+
+# Parse response from claude --output-format json
+raw = result.stdout.strip()
+matches_data = None
+try:
+    outer = json.loads(raw)
+    result_text = outer.get('result', '')
+    # Try parsing the result text as JSON directly
+    try:
+        matches_data = json.loads(result_text)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    # Try extracting JSON from markdown code blocks
+    if not matches_data:
+        import re
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', result_text, re.DOTALL)
+        if json_match:
+            try:
+                matches_data = json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                pass
+    # Try finding raw JSON in the text
+    if not matches_data:
+        json_match = re.search(r'\{[^{}]*"matches"\s*:\s*\[.*?\]\s*\}', result_text, re.DOTALL)
+        if json_match:
+            try:
+                matches_data = json.loads(json_match.group())
+            except json.JSONDecodeError:
+                pass
+except json.JSONDecodeError:
+    pass
+
+if not matches_data:
+    print(f'\033[38;5;203mCould not parse AI response. Try \'sb search {query}\' instead.\033[0m', file=sys.stderr)
+    sys.exit(1)
+
+matches = matches_data.get('matches', [])
+if not matches:
+    print(f'{D}No AI matches found. Try \'sb search {query}\' for keyword search.{N}')
+    sys.exit(0)
+
+# Map back to full skill objects and output
+if is_json:
+    out = []
+    for m in matches:
+        skill = name_map.get(m['name'].lower())
+        if skill:
+            out.append({
+                'name': skill['name'],
+                'command': skill.get('triggerCommand', '/' + skill['name']),
+                'description': skill.get('description', ''),
+                'scope': skill.get('scope', ''),
+                'editor': skill.get('editor', ''),
+                'ai_score': m.get('score', 0),
+                'ai_reason': m.get('reason', '')
+            })
+    print(json.dumps(out, indent=2))
+else:
+    print(f'\n  {PRP}AI results for "{query}"{N}\n')
+    for m in matches:
+        skill = name_map.get(m['name'].lower())
+        if not skill:
+            continue
+        cmd = skill.get('triggerCommand', '/' + skill['name'])
+        desc = skill.get('description', '')[:80]
+        score = m.get('score', 0)
+        reason = m.get('reason', '')
+        print(f'  {CYN}{cmd:<35}{N} {D}{desc}{N}')
+        print(f'  {GRY}  score: {score}/10 \u2014 {reason}{N}')
+PYEOF_AI
         ;;
     info)
         # Alias for show
@@ -2948,7 +3300,7 @@ if match.get('repo') and match.get('remote_path'):
         if not content:
             try:
                 api_path = f'repos/{match["repo"]}/contents/{match["remote_path"]}/{doc}'
-                r = subprocess.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=15)
+                r = subprocess.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=30)
                 if r.returncode == 0:
                     data = json.loads(r.stdout)
                     if data.get('content'):
@@ -3109,7 +3461,7 @@ for f in sorted(glob.glob(os.path.join(cache_dir, '*.json'))):
             if s['name'].lower() == name and s.get('repo') and s.get('remote_path'):
                 # Fetch SKILL.md via gh api
                 api_path = f'repos/{s["repo"]}/contents/{s["remote_path"]}/SKILL.md'
-                r = subprocess.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=15)
+                r = subprocess.run(['gh', 'api', api_path], capture_output=True, text=True, timeout=30)
                 if r.returncode == 0:
                     data = json.loads(r.stdout)
                     if data.get('content'):
